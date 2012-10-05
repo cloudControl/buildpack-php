@@ -1,0 +1,187 @@
+#!/usr/bin/env bash
+
+# Copyright 2012 cloudControl GmbH
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# bin/compile <build-dir> <cache-dir>
+
+set -eo pipefail
+
+indent_head() {
+    sed -u "s/^/-----> /"
+}
+
+indent() {
+    sed -u "s/^/       /"
+}
+
+# parameters: $ABSOLUTE_DIR
+function clean_directory() {
+    rm -rf $1
+    mkdir $1
+}
+
+BIN_DIR=$(readlink -f $(dirname $0))
+BUILD_DIR=$1
+BP_DIR=$(readlink -f $(dirname $BIN_DIR))
+
+APACHE_PATH="$BUILD_DIR/apache"
+PHP_PATH="$BUILD_DIR/php"
+
+PROJECT_ROOT=$BUILD_DIR/www
+
+cd $BUILD_DIR
+
+# move everything in BUILD_DIR except buildpack-specific files to PROJECT_ROOT
+TMP=$(mktemp -d --tmpdir=.)
+find . -mindepth 1 -maxdepth 1 -not -regex "./Procfile\|$TMP\|./.buildpack" -exec mv --target-directory="$TMP" '--' '{}' +
+mv "$TMP" "$PROJECT_ROOT"
+
+mkdir -p $APACHE_PATH/logs
+mkdir -p $APACHE_PATH/conf/{share,local,user}
+mkdir -p $PHP_PATH/{box,conf,logs}
+
+cp $BP_DIR/support/boot.sh .
+
+# Install composer
+if [[ -f $PROJECT_ROOT/composer.json ]]; then
+    if [[ ! -f $PROJECT_ROOT/composer.phar ]]; then
+        curl -s https://getcomposer.org/installer | php -- --install-dir=$PROJECT_ROOT
+    fi
+    php $PROJECT_ROOT/composer.phar install -n -d $PROJECT_ROOT/ | indent
+fi
+
+if [[ $PAAS_VENDOR = "cloudControl" ]]; then
+    PROJECT_CCCONFIG=$PROJECT_ROOT/.ccconfig.yaml
+
+    TMP=$(grep -o 'WebContent.*' $PROJECT_CCCONFIG 2>/dev/null | sed 's/WebContent *: *//' || echo "")
+    if [[ TMP ]]; then
+        WEBCONTENT="$TMP"
+    fi
+fi
+
+# Framework detection
+FRAMEWORK=$($BIN_DIR/detect $PROJECT_ROOT)
+
+case $FRAMEWORK in
+
+"PHP/Symfony1")
+    echo "Symfony 1.x detected" | indent_head
+    WEBCONTENT=${WEBCONTENT:-'web'}
+    cp $BP_DIR/conf/symfony1.x.conf $APACHE_PATH/conf/share/50-symfony1.x.conf
+    clean_directory $PROJECT_ROOT/cache
+    ;;
+"PHP/Symfony2")
+    echo "Symfony 2.x detected" | indent_head
+    WEBCONTENT=${WEBCONTENT:-'web'}
+    clean_directory $PROJECT_ROOT/app/cache
+    clean_directory $PROJECT_ROOT/app/logs
+    ;;
+"PHP/Zend1")
+    echo "Zend 1.x Framework detected" | indent_head
+    WEBCONTENT=${WEBCONTENT:-'public'}
+    ;;
+"PHP/Zend2")
+    echo "Zend 2.x Framework detected" | indent_head
+    WEBCONTENT=${WEBCONTENT:-'public'}
+    ;;
+"PHP/Yii")
+    echo "Yii Framework detected" | indent_head
+    for d in $(find $PROJECT_ROOT -mindepth 1 -maxdepth 1 -type d); do
+        if [[ -f $d/index.php && -d $d/protected ]]; then
+            webroot=$(basename $d)
+        fi
+    done
+    WEBCONTENT=${WEBCONTENT:-$webroot}
+    if [[ ! "$WEBCONTENT" ]]; then
+        echo "ERROR: Failed to auto-detect web content." | indent
+        exit 1
+    fi
+    if [[ ! -d $PROJECT_ROOT/$WEBCONTENT/protected/runtime ]]; then
+        echo "Required directory missing, creating '$WEBCONTENT/protected/runtime'." | indent
+        mkdir $PROJECT_ROOT/$WEBCONTENT/protected/runtime
+    fi
+    if [[ ! -d $PROJECT_ROOT/$WEBCONTENT/assets ]]; then
+        echo "Required directory missing, creating '$WEBCONTENT/assets'." | indent
+        mkdir $PROJECT_ROOT/$WEBCONTENT/assets
+    fi
+    ;;
+"PHP/Kohana")
+    echo "Kohana Framework detected" | indent_head
+    WEBCONTENT=${WEBCONTENT:-''}
+    clean_directory $PROJECT_ROOT/application/cache
+    clean_directory $PROJECT_ROOT/application/logs
+    ;;
+"PHP/CakePhp")
+    echo "CakePhp Framework detected" | indent_head
+    if [[ ! -f $PROJECT_ROOT/app/Config/core.php ]]; then
+        echo "ERROR: in order to run your application you need the configuration file. Please check your .gitignore file." | indent
+        exit 1
+    fi
+    if [[ ! -d $PROJECT_ROOT/app/plugins ]]; then
+        echo "You didn't push the plugins folder, please check your .gitignore file." | indent
+    fi
+    if [[ ! -d $PROJECT_ROOT/app/vendors ]]; then
+        echo "You didn't push the vendors folder, please check your .gitignore file." | indent
+    fi
+    clean_directory $PROJECT_ROOT/app/tmp
+    mkdir -p $PROJECT_ROOT/app/tmp/{logs,cache,sessions,tests}
+    ;;
+*)
+    WEBCONTENT=${WEBCONTENT:-''}
+    ;;
+esac
+
+if [[ $PAAS_VENDOR = "cloudControl" ]]; then
+    # compatibility for luigi stack
+    if [[ ! -f "$PROJECT_CCCONFIG" ]]; then
+        echo -e "BaseConfig:\n  WebContent: /$WEBCONTENT" > $PROJECT_CCCONFIG
+    fi
+fi
+
+# set default values if not defined in user custom configuration files
+if ! grep -q -s "DocumentRoot" $BUILD_DIR/.buildpack/apache/conf/*.conf ; then
+    DOCUMENT_ROOT="/app/www/$WEBCONTENT"
+    echo "DocumentRoot \"$DOCUMENT_ROOT\"" > $APACHE_PATH/conf/share/documentroot.conf
+    cat >> $APACHE_PATH/conf/share/documentroot.conf <<EOF
+<Directory "$DOCUMENT_ROOT">
+    AllowOverride All
+    Options SymlinksIfOwnerMatch
+    Order Deny,Allow
+    Allow from All
+    DirectoryIndex index.php index.html index.htm
+</Directory>
+EOF
+fi
+
+cp $BP_DIR/conf/php-fpm.ini $PHP_PATH
+cp $BP_DIR/conf/php.ini $PHP_PATH/conf/010_php.ini
+
+for f in /etc/php5/conf.d/*.ini; do
+    cp $f $PHP_PATH/conf/000_`basename $f`;
+done
+
+if [ -d $BUILD_DIR/.buildpack/php/conf ]; then
+    cp $BUILD_DIR/.buildpack/php/conf/*.ini $PHP_PATH/conf/
+fi
+
+cp $BP_DIR/conf/httpd.conf $APACHE_PATH/conf
+if [ -d $BUILD_DIR/.buildpack/apache/conf ]; then
+    cp $BUILD_DIR/.buildpack/apache/conf/* $APACHE_PATH/conf/user
+fi
+
+if [[ $PAAS_VENDOR = "cloudControl" ]]; then
+    echo "[APC]" > $PHP_PATH/conf/cctrl_apc.ini
+    grep -o 'apc.*' $PROJECT_CCCONFIG | sed 's/apcEnabled/apc.enabled/;s/apcShmSize/apc.shm_size/;s/apcStat/apc.stat/;s/:/ =/' >> $PHP_PATH/conf/cctrl_apc.ini || rm $PHP_PATH/conf/cctrl_apc.ini
+fi
