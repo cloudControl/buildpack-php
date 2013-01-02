@@ -72,6 +72,7 @@ if [[ $PAAS_VENDOR = "cloudControl" ]]; then
 fi
 
 # Framework detection
+pushd $PROJECT_ROOT &> /dev/null
 FRAMEWORK=$($BIN_DIR/detect $PROJECT_ROOT)
 
 case $FRAMEWORK in
@@ -80,13 +81,13 @@ case $FRAMEWORK in
     echo "Symfony 1.x detected" | indent_head
     WEBCONTENT=${WEBCONTENT:-'web'}
     cp $BP_DIR/conf/symfony1.x.conf $APACHE_PATH/conf/share/50-symfony1.x.conf
-    clean_directory $PROJECT_ROOT/cache
+    clean_directory cache
     ;;
 "PHP/Symfony2")
     echo "Symfony 2.x detected" | indent_head
     WEBCONTENT=${WEBCONTENT:-'web'}
-    clean_directory $PROJECT_ROOT/app/cache
-    clean_directory $PROJECT_ROOT/app/logs
+    clean_directory app/cache
+    clean_directory app/logs
     ;;
 "PHP/Zend1")
     echo "Zend 1.x Framework detected" | indent_head
@@ -98,9 +99,9 @@ case $FRAMEWORK in
     ;;
 "PHP/Yii")
     echo "Yii Framework detected" | indent_head
-    for d in $(find $PROJECT_ROOT -maxdepth 1 -type d); do
+    for d in $(find . -maxdepth 1 -type d); do
         if [[ -f $d/index.php && -d $d/protected ]]; then
-            webroot=$(basename $d)
+            webroot="$d"
         fi
     done
     WEBCONTENT=${WEBCONTENT:-$webroot}
@@ -108,34 +109,36 @@ case $FRAMEWORK in
         echo "ERROR: Failed to auto-detect web content." | indent
         exit 1
     fi
-    if [[ ! -d $PROJECT_ROOT/$WEBCONTENT/protected/runtime ]]; then
+    if [[ ! -d $WEBCONTENT/protected/runtime ]]; then
         echo "Required directory missing, creating '$WEBCONTENT/protected/runtime'." | indent
         mkdir $PROJECT_ROOT/$WEBCONTENT/protected/runtime
     fi
-    if [[ ! -d $PROJECT_ROOT/$WEBCONTENT/assets ]]; then
+    if [[ ! -d $WEBCONTENT/assets ]]; then
         echo "Required directory missing, creating '$WEBCONTENT/assets'." | indent
-        mkdir $PROJECT_ROOT/$WEBCONTENT/assets
+        mkdir $WEBCONTENT/assets
     fi
     ;;
 "PHP/Kohana")
     echo "Kohana Framework detected" | indent_head
     WEBCONTENT=${WEBCONTENT:-''}
-    clean_directory $PROJECT_ROOT/application/cache
-    clean_directory $PROJECT_ROOT/application/logs
+    clean_directory application/cache
+    clean_directory application/logs
     ;;
 "PHP/CakePhp")
     echo "CakePhp Framework detected" | indent_head
-    if [[ ! -f $PROJECT_ROOT/app/Config/core.php ]]; then
+    if [[ ! -f app/Config/core.php ]]; then
         echo "ERROR: in order to run your application you need the configuration file. Please check your .gitignore file." | indent
         exit 1
     fi
-    clean_directory $PROJECT_ROOT/app/tmp
-    mkdir -p $PROJECT_ROOT/app/tmp/{logs,cache,sessions,tests}
+    clean_directory app/tmp
+    mkdir -p app/tmp/{logs,cache,sessions,tests}
     ;;
 *)
     WEBCONTENT=${WEBCONTENT:-''}
     ;;
 esac
+
+popd &> /dev/null
 
 if [[ $PAAS_VENDOR = "cloudControl" ]]; then
     # compatibility for luigi stack
@@ -145,7 +148,7 @@ if [[ $PAAS_VENDOR = "cloudControl" ]]; then
 fi
 
 # set default values if not defined in user custom configuration files
-if ! grep -q -s "DocumentRoot" $BUILD_DIR/.buildpack/apache/conf/*.conf ; then
+if ! grep -q -s "DocumentRoot" .buildpack/apache/conf/*.conf ; then
     DOCUMENT_ROOT="/app/www/$WEBCONTENT"
     echo "DocumentRoot \"$DOCUMENT_ROOT\"" > $APACHE_PATH/conf/share/documentroot.conf
     cat >> $APACHE_PATH/conf/share/documentroot.conf <<EOF
@@ -166,13 +169,13 @@ for f in /etc/php5/conf.d/*.ini; do
     cp $f $PHP_PATH/conf/000_`basename $f`;
 done
 
-if [ -d $BUILD_DIR/.buildpack/php/conf ]; then
-    cp $BUILD_DIR/.buildpack/php/conf/*.ini $PHP_PATH/conf/
+if [ -d .buildpack/php/conf ]; then
+    cp .buildpack/php/conf/*.ini $PHP_PATH/conf/
 fi
 
 cp $BP_DIR/conf/httpd.conf $APACHE_PATH/conf
-if [ -d $BUILD_DIR/.buildpack/apache/conf ]; then
-    cp $BUILD_DIR/.buildpack/apache/conf/* $APACHE_PATH/conf/user
+if [ -d .buildpack/apache/conf ]; then
+    cp .buildpack/apache/conf/* $APACHE_PATH/conf/user
 fi
 
 if [[ $PAAS_VENDOR = "cloudControl" ]]; then
