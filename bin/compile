@@ -129,12 +129,6 @@ case $FRAMEWORK in
         echo "ERROR: in order to run your application you need the configuration file. Please check your .gitignore file." | indent
         exit 1
     fi
-    if [[ ! -d $PROJECT_ROOT/app/plugins ]]; then
-        echo "You didn't push the plugins folder, please check your .gitignore file." | indent
-    fi
-    if [[ ! -d $PROJECT_ROOT/app/vendors ]]; then
-        echo "You didn't push the vendors folder, please check your .gitignore file." | indent
-    fi
     clean_directory $PROJECT_ROOT/app/tmp
     mkdir -p $PROJECT_ROOT/app/tmp/{logs,cache,sessions,tests}
     ;;
