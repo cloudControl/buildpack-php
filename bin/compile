@@ -98,7 +98,7 @@ case $FRAMEWORK in
     ;;
 "PHP/Yii")
     echo "Yii Framework detected" | indent_head
-    for d in $(find $PROJECT_ROOT -mindepth 1 -maxdepth 1 -type d); do
+    for d in $(find $PROJECT_ROOT -maxdepth 1 -type d); do
         if [[ -f $d/index.php && -d $d/protected ]]; then
             webroot=$(basename $d)
         fi
