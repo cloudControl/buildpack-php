@@ -41,6 +41,20 @@ Other frameworks might work if you just
 [specify the DocumentRoot](#manually-setting-the-documentroot) manually.
 
 ## Configuration
+### Buildpack
+
+You can place buildpack configuration in the `.buildpack` directory of your repository. Some influential variables can be set in the file `.buildpack/envrc`.
+
+Currently supported variables are:
+
+`COMPOSER_INSTALL_ARGS` to set additional arguments you want to pass to the composer install command.
+
+Example .buildpack/envrc:
+
+~~~bash
+export COMPOSER_INSTALL_ARGS="--prefer-source --optimize-autoloader"
+~~~
+
 ### Apache
 For normal deployments the buildpack's default settings should work out of the
 box. If you want to pass additional options to Apache, place them in files under
