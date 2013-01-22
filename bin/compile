@@ -43,7 +43,7 @@ PROJECT_ROOT=$BUILD_DIR/www
 
 # Load buildpack environment
 if [[ -f .buildpack/environment.sh ]]; then
-    source .buildpack/environment.sh
+    source .buildpack/envrc
 fi
 
 cd $BUILD_DIR
@@ -65,7 +65,6 @@ if [[ -f $PROJECT_ROOT/composer.json ]]; then
         curl -s https://getcomposer.org/installer | php -- --install-dir=$PROJECT_ROOT
     fi
 
-    COMPOSER_INSTALL_ARGS=${COMPOSER_INSTALL_ARGS:-''}
     php $PROJECT_ROOT/composer.phar install $COMPOSER_INSTALL_ARGS -n -d $PROJECT_ROOT/ | indent
 fi
 
