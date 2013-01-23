@@ -26,7 +26,7 @@ elif [[ -f public/index.php && $(grep 'Zend\\Mvc\\Application::init' public/inde
     echo "PHP/Zend2"  # Zend 2.x created via ZendSkeletonApplication
 elif [[ -f framework/yii.php ]]; then
     echo "PHP/Yii"
-elif [[ -f system/classes/kohana.php || -f system/classes/Kohana.php && -d application ]]; then
+elif [[ (-f system/classes/kohana.php || -f system/classes/Kohana.php) && -d application ]]; then
     echo "PHP/Kohana"
 elif [[ -f app/Console/cake ]]; then
     echo "PHP/CakePhp"
