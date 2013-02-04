@@ -42,7 +42,7 @@ PHP_PATH="$BUILD_DIR/php"
 PROJECT_ROOT=$BUILD_DIR/www
 
 # Load buildpack environment
-if [[ -f .buildpack/environment.sh ]]; then
+if [[ -f .buildpack/envrc ]]; then
     source .buildpack/envrc
 fi
 
