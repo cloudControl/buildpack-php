@@ -62,7 +62,7 @@ box. If you want to pass additional options to Apache, place them in files under
 at the end of Apache's httpd.conf.
 
 #### Manually setting the DocumentRoot
-By default the document root of the web application is '/app/www'. This can be modified in custom Apache configuration files too. Below is the example of the Apache configuration file specifying a custom DocumentRoot and Directory:
+By default the document root of the web application is '/app/www'. This can be modified in custom Apache configuration files too. Below is the example of the Apache configuration file (e.g `.buildpack/apache/conf/custom_document_root.conf`) specifying a custom [DocumentRoot](http://httpd.apache.org/docs/current/mod/core.html#documentroot) and [Directory](http://httpd.apache.org/docs/current/mod/core.html#directory):
 
     # If the webroot is /page/public in your project, the DocumentRoot will be
     # /app/www/page/public
@@ -75,6 +75,43 @@ By default the document root of the web application is '/app/www'. This can be m
         Allow from All
         DirectoryIndex index.php index.html index.htm
     </Directory>
+
+#### Create alias
+Whenever need to map between URLs and file system paths not being under DocumentRoot specify [alias](http://httpd.apache.org/docs/2.2/mod/mod_alias.html#alias) and pass it in custom configuration file, e.g `.buildpack/apache/conf/sf_alias.conf`:
+
+    #Create alias for symfony resources
+    Alias /sf /app/www/lib/vendor/symfony/data/web/sf
+    <Directory /app/www/lib/vendor/symfony/data/web/sf>
+        AllowOverride All
+        Options SymlinksIfOwnerMatch
+        Order Deny,Allow
+        Allow from All
+    </Directory>
+
+#### Supported Appache mods:
+
+You can customize your Apache configuration on the pinky stack on cloudControl using the listed mods:
+
+* [mod_actions](http://httpd.apache.org/docs/2.2/mod/mod_actions.html)
+* [mod_alias](http://httpd.apache.org/docs/2.2/mod/mod_alias.html)
+* [mod_auth_basic](http://httpd.apache.org/docs/2.2/mod/mod_auth_basic.html)
+* [mod_authn_file](http://httpd.apache.org/docs/2.2/mod/mod_authn_file.html)
+* [mod_authz_default](http://httpd.apache.org/docs/2.2/mod/mod_authz_default.html)
+* [mod_authz_groupfile](http://httpd.apache.org/docs/2.2/mod/mod_authz_groupfile.html)
+* [mod_authz_host](http://httpd.apache.org/docs/2.2/mod/mod_authz_host.html)
+* [mod_authz_user](http://httpd.apache.org/docs/2.2/mod/mod_authz_user.html)
+* [mod_autoindex](http://httpd.apache.org/docs/2.2/mod/mod_autoindex.html)
+* [mod_deflate](http://httpd.apache.org/docs/2.2/mod/mod_deflate.html)
+* [mod_dir](http://httpd.apache.org/docs/2.2/mod/mod_dir.html)
+* [mod_env](http://httpd.apache.org/docs/2.2/mod/mod_env.html)
+* [mod_expires](http://httpd.apache.org/docs/2.2/mod/mod_expires.html)
+* [mod_headers](http://httpd.apache.org/docs/2.2/mod/mod_headers.html)
+* [mod_mime](http://httpd.apache.org/docs/2.2/mod/mod_mime.html)
+* [mod_negotiation](http://httpd.apache.org/docs/2.2/mod/mod_negotiation.html)
+* [mod_reqtimeout](http://httpd.apache.org/docs/2.2/mod/mod_reqtimeout.html)
+* [mod_rewrite](http://httpd.apache.org/docs/2.2/mod/mod_rewrite.html)
+* [mod_setenvif](http://httpd.apache.org/docs/2.2/mod/mod_setenvif.html)
+* [mod_status](http://httpd.apache.org/docs/2.2/mod/mod_status.html)
 
 ### PHP
 Similarly, the default PHP configuration can be overridden or extended by specifying custom configuration files in .buildpack/php/conf directory. They should follow the PHP config syntax and should have an '.ini' extension, e.g:
