@@ -1,5 +1,5 @@
 # PHP buildpack
-This is a buildpack conforming to the [Heroku buildpack api](https://devcenter.heroku.com/articles/buildpack-api). It runs PHP applications using Apache and PHP-FPM.
+This is the cloudControl PHP buildpack conforming to the [Heroku buildpack api](https://devcenter.heroku.com/articles/buildpack-api). It runs PHP applications using Apache and PHP-FPM.
 
 ## Composer - dependency management
 [Composer](https://getcomposer.org/) is used to manage the dependencies. There should be a 'composer.json' file in the top directory of the project.
@@ -61,7 +61,7 @@ box. If you want to pass additional options to Apache, place them in files under
 .buildpack/apache/conf directory. All files in this directory ending in .conf get included
 at the end of Apache's httpd.conf.
 
-#### Manually setting the DocumentRoot
+#### Manually Setting the DocumentRoot
 By default the document root of the web application is '/app/www'. This can be modified in custom Apache configuration files too. Below is the example of the Apache configuration file (e.g `.buildpack/apache/conf/custom_document_root.conf`) specifying a custom [DocumentRoot](http://httpd.apache.org/docs/current/mod/core.html#documentroot) and [Directory](http://httpd.apache.org/docs/current/mod/core.html#directory):
 
     # If the webroot is /page/public in your project, the DocumentRoot will be
@@ -76,7 +76,7 @@ By default the document root of the web application is '/app/www'. This can be m
         DirectoryIndex index.php index.html index.htm
     </Directory>
 
-#### Create alias
+#### Create Alias
 Whenever need to map between URLs and file system paths not being under DocumentRoot specify [alias](http://httpd.apache.org/docs/2.2/mod/mod_alias.html#alias) and pass it in custom configuration file, e.g `.buildpack/apache/conf/sf_alias.conf`:
 
     #Create alias for symfony resources
@@ -88,9 +88,9 @@ Whenever need to map between URLs and file system paths not being under Document
         Allow from All
     </Directory>
 
-#### Supported Appache mods:
+#### Supported Apache Modules:
 
-You can customize your Apache configuration on the pinky stack on cloudControl using the listed mods:
+The following Apache Modules are available as part of the Pinky stack:
 
 * [mod_actions](http://httpd.apache.org/docs/2.2/mod/mod_actions.html)
 * [mod_alias](http://httpd.apache.org/docs/2.2/mod/mod_alias.html)
