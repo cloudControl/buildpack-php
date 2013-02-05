@@ -1,5 +1,5 @@
 # PHP buildpack
-This is the cloudControl PHP buildpack conforming to the [Heroku buildpack api](https://devcenter.heroku.com/articles/buildpack-api). It runs PHP applications using Apache and PHP-FPM.
+This is the [cloudControl PaaS](https://www.cloudcontrol.com) PHP buildpack conforming to the [Heroku buildpack api](https://devcenter.heroku.com/articles/buildpack-api). It runs PHP applications using Apache and PHP-FPM.
 
 ## Composer - dependency management
 [Composer](https://getcomposer.org/) is used to manage the dependencies. There should be a 'composer.json' file in the top directory of the project.
