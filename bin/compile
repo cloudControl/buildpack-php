@@ -39,7 +39,8 @@ BP_DIR=$(readlink -f $(dirname $BIN_DIR))
 APACHE_PATH="$BUILD_DIR/apache"
 PHP_PATH="$BUILD_DIR/php"
 
-PROJECT_ROOT=$BUILD_DIR/www
+CODE_DIR=code
+PROJECT_ROOT=$BUILD_DIR/$CODE_DIR
 
 # Load buildpack environment
 if [[ -f .buildpack/envrc ]]; then
@@ -52,6 +53,7 @@ cd $BUILD_DIR
 TMP=$(mktemp -d --tmpdir=.)
 find . -mindepth 1 -maxdepth 1 -not -regex "./Procfile\|$TMP\|./.buildpack" -exec mv --target-directory="$TMP" '--' '{}' +
 mv "$TMP" "$PROJECT_ROOT"
+ln -s code www
 
 mkdir -p $APACHE_PATH/logs
 mkdir -p $APACHE_PATH/conf/{share,local,user}
@@ -158,7 +160,7 @@ fi
 
 # set default values if not defined in user custom configuration files
 if ! grep -q -s "DocumentRoot" .buildpack/apache/conf/*.conf ; then
-    DOCUMENT_ROOT="/app/www/$WEBCONTENT"
+    DOCUMENT_ROOT="/app/code/$WEBCONTENT"
     echo "DocumentRoot \"$DOCUMENT_ROOT\"" > $APACHE_PATH/conf/share/documentroot.conf
     cat >> $APACHE_PATH/conf/share/documentroot.conf <<EOF
 <Directory "$DOCUMENT_ROOT">

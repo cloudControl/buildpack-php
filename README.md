@@ -62,13 +62,13 @@ box. If you want to pass additional options to Apache, place them in files under
 at the end of Apache's httpd.conf.
 
 #### Manually Setting the DocumentRoot
-By default the document root of the web application is '/app/www'. This can be modified in custom Apache configuration files too. Below is the example of the Apache configuration file (e.g `.buildpack/apache/conf/custom_document_root.conf`) specifying a custom [DocumentRoot](http://httpd.apache.org/docs/current/mod/core.html#documentroot) and [Directory](http://httpd.apache.org/docs/current/mod/core.html#directory):
+By default the document root of the web application is '/app/code'. This can be modified in custom Apache configuration files too. Below is the example of the Apache configuration file (e.g. `.buildpack/apache/conf/custom_document_root.conf`) specifying a custom [DocumentRoot](http://httpd.apache.org/docs/current/mod/core.html#documentroot) and [Directory](http://httpd.apache.org/docs/current/mod/core.html#directory):
 
     # If the webroot is /page/public in your project, the DocumentRoot will be
-    # /app/www/page/public
-    DocumentRoot /app/www/page/public
+    # /app/code/page/public
+    DocumentRoot /app/code/page/public
     # allow access to this directory (required)
-    <Directory /app/www/page/public>
+    <Directory /app/code/page/public>
         AllowOverride All
         Options SymlinksIfOwnerMatch
         Order Deny,Allow
@@ -80,8 +80,8 @@ By default the document root of the web application is '/app/www'. This can be m
 Whenever need to map between URLs and file system paths not being under DocumentRoot specify [alias](http://httpd.apache.org/docs/2.2/mod/mod_alias.html#alias) and pass it in custom configuration file, e.g `.buildpack/apache/conf/sf_alias.conf`:
 
     #Create alias for symfony resources
-    Alias /sf /app/www/lib/vendor/symfony/data/web/sf
-    <Directory /app/www/lib/vendor/symfony/data/web/sf>
+    Alias /sf /app/code/lib/vendor/symfony/data/web/sf
+    <Directory /app/code/lib/vendor/symfony/data/web/sf>
         AllowOverride All
         Options SymlinksIfOwnerMatch
         Order Deny,Allow
