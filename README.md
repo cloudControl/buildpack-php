@@ -40,6 +40,18 @@ The following frameworks are currently supported:
 Other frameworks might work if you just
 [specify the DocumentRoot](#manually-setting-the-documentroot) manually.
 
+## Custom Procfile
+The buildpack generates a file called `Procfile` in your project root,
+which is used to start your application,
+If you want to define worker process types, you have to override this default Procfile with your own.
+In this case you also have to explicitly provide the _web_ process command:
+~~~
+web: bash boot.sh
+myworker: php code/do_work.php --some-worker-option
+~~~
+Your repository contents are located beneath `code/`, so if you have a worker script in your repository under `scripts/mail_worker.php`, use
+`php code/scripts/mail_worker.php` in your Procfile line. The name of the worker process type ("myworker" in the example) can be chosen arbitrarily.
+
 ## Configuration
 ### Buildpack
 
