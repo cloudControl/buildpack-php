@@ -33,8 +33,9 @@ function clean_directory() {
 }
 
 BIN_DIR=$(readlink -f $(dirname $0))
-BUILD_DIR=$1
 BP_DIR=$(readlink -f $(dirname $BIN_DIR))
+BUILD_DIR=$1
+CACHE_DIR=$2
 
 APACHE_PATH="$BUILD_DIR/apache"
 PHP_PATH="$BUILD_DIR/php"
@@ -61,8 +62,18 @@ mkdir -p $PHP_PATH/{box,conf,logs}
 
 cp $BP_DIR/support/boot.sh .
 
-# Install composer
 if [[ -f $PROJECT_ROOT/composer.json ]]; then
+    # Caching: pre-install
+    CACHED_DIRS="vendor"
+    mkdir -p $CACHE_DIR
+    for dir in $CACHED_DIRS; do
+        if [[ -e $PROJECT_ROOT/$dir ]]; then
+            cp -R $PROJECT_ROOT/$dir $CACHE_DIR/ &> /dev/null || true
+        fi
+        cp -R $CACHE_DIR/$dir $PROJECT_ROOT/ &> /dev/null || true
+    done
+
+    # Install composer
     if [[ ! -f $PROJECT_ROOT/composer.phar ]]; then
         curl -s https://getcomposer.org/installer | php -- --install-dir=$PROJECT_ROOT
     fi
@@ -71,6 +82,12 @@ if [[ -f $PROJECT_ROOT/composer.json ]]; then
 
     # Clean the Image
     rm $PROJECT_ROOT/composer.phar
+
+    # Caching: post-install
+    for dir in $CACHED_DIRS; do
+        rm -rf $CACHE_DIR/$dir
+        cp -R $PROJECT_ROOT/$dir $CACHE_DIR/
+    done
 fi
 
 if [[ $PAAS_VENDOR = "cloudControl" ]]; then
