@@ -159,7 +159,17 @@ case $FRAMEWORK in
         exit 1
     fi
     clean_directory app/tmp
+    # this is the origin folder structure, that should be created
+    # app/tmp/
+    # ├── cache
+    # │   ├── models
+    # │   ├── persistent
+    # │   └── views
+    # ├── logs
+    # ├── sessions
+    # └── tests
     mkdir -p app/tmp/{logs,cache,sessions,tests}
+    mkdir -p app/tmp/cache/{models,persistent,views}
     ;;
 *)
     WEBCONTENT=${WEBCONTENT:-''}
