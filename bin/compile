@@ -43,12 +43,12 @@ PHP_PATH="$BUILD_DIR/php"
 CODE_DIR=code
 PROJECT_ROOT=$BUILD_DIR/$CODE_DIR
 
+cd $BUILD_DIR
+
 # Load buildpack environment
 if [[ -f .buildpack/envrc ]]; then
     source .buildpack/envrc
 fi
-
-cd $BUILD_DIR
 
 # move everything in BUILD_DIR except buildpack-specific files to PROJECT_ROOT
 TMP=$(mktemp -d --tmpdir=.)
