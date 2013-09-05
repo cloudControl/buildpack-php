@@ -75,10 +75,11 @@ if [[ -f $PROJECT_ROOT/composer.json ]]; then
 
     # Install composer
     if [[ ! -f $PROJECT_ROOT/composer.phar ]]; then
-        curl -s https://getcomposer.org/installer | php -- --install-dir=$PROJECT_ROOT
+        curl --remote-name --silent https://getcomposer.org/installer
+        php installer --quiet --install-dir=$PROJECT_ROOT
     fi
 
-    $PROJECT_ROOT/composer.phar install $COMPOSER_INSTALL_ARGS -n -d $PROJECT_ROOT/ | indent
+    php $PROJECT_ROOT/composer.phar install $COMPOSER_INSTALL_ARGS -n -d $PROJECT_ROOT/ | indent
 
     # Clean the Image
     rm $PROJECT_ROOT/composer.phar
