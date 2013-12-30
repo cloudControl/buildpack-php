@@ -201,7 +201,12 @@ if ! grep -q -s "DocumentRoot" .buildpack/apache/conf/*.conf ; then
 EOF
 fi
 
-cp $BP_DIR/conf/php-fpm.ini $PHP_PATH
+if [ -d .buildpack/php-fpm/conf ]; then
+    cp .buildpack/php-fpm/conf/php-fpm.conf $PHP_PATH/php-fpm.ini
+else
+    cp $BP_DIR/conf/php-fpm.ini $PHP_PATH
+fi
+
 cp $BP_DIR/conf/php.ini $PHP_PATH/conf/010_php.ini
 
 for f in /etc/php5/conf.d/*.ini; do
