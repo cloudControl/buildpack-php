@@ -8,8 +8,8 @@ if (count($files) != 4){
 );
 }
 
-$default_php_fpm_ini = parse_ini_file($files[1], true);
-$custom_php_fpm_ini = parse_ini_file($files[2], true);
+$default_php_fpm_ini = parse_ini_file($files[1], true, INI_SCANNER_RAW);
+$custom_php_fpm_ini = parse_ini_file($files[2], true, INI_SCANNER_RAW);
 
 $configuration = array_replace_recursive($default_php_fpm_ini, $custom_php_fpm_ini);
 
