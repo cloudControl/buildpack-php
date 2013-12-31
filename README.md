@@ -53,8 +53,8 @@ Your repository contents are located beneath `code/`, so if you have a worker sc
 `php code/scripts/mail_worker.php` in your Procfile line. The name of the worker process type ("myworker" in the example) can be chosen arbitrarily.
 
 ## Configuration
-### Buildpack
 
+### Buildpack
 You can place buildpack configuration in the `.buildpack` directory of your repository. Some influential variables can be set in the file `.buildpack/envrc`.
 
 Currently supported variables are:
@@ -62,10 +62,23 @@ Currently supported variables are:
 `COMPOSER_INSTALL_ARGS` to set additional arguments you want to pass to the composer install command.
 
 Example .buildpack/envrc:
-
 ~~~bash
 export COMPOSER_INSTALL_ARGS="--prefer-source --optimize-autoloader"
 ~~~
+
+During the build process the following enviroment variables are available in order customize your configuration:
+    * `DEP_NAME` - deployment name
+
+For example you could use the `DEP_NAME` to distinguish the configuration for each deployment:
+~~~bash
+if [ "$DEP_NAME" == "foobar/production" ]; then
+    export COMPOSER_INSTALL_ARGS="--no-dev --optimize-autoloader"
+fi
+~~~
+
+You can also utilize those enviroment variables in your composer install
+scripts to configure your app according to your needs as in this
+[example](https://gist.github.com/sgotre/7706500)
 
 ### Apache
 For normal deployments the buildpack's default settings should work out of the
