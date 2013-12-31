@@ -145,3 +145,16 @@ Similarly, the default PHP configuration can be overridden or extended by specif
 	apc.stat = 1
 	apc.enabled = 0
 	apc.shm_size = 27M
+
+### PHP-FPM
+PHP applications on cloudControl run on the [PHP-FPM](http://php-fpm.org/)
+FastCGI implemantation. The default configuration can be found
+[here](https://github.com/cloudControl/buildpack-php/blob/master/conf/php-fpm.ini).
+In order to override or extend it, you should create file named `php-fpm.ini` under
+the `.buildpack/php-fpm/conf/` directory and set your preffered setting under the
+appropriate section like this:
+
+    [www]
+    pm = dynamic
+    pm.start_servers = 1
+    pm.max_children = 5
