@@ -66,7 +66,7 @@ Example .buildpack/envrc:
 export COMPOSER_INSTALL_ARGS="--prefer-source --optimize-autoloader"
 ~~~
 
-During the build process the following enviroment variables are available in order customize your configuration:
+During the build process the following enviroment variables are available in order to allow you customization of your configuration:
     * `DEP_NAME` - deployment name
 
 For example you could use the `DEP_NAME` to distinguish the configuration for each deployment:
