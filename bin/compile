@@ -202,7 +202,6 @@ EOF
 fi
 
 if [ -f .buildpack/php-fpm/conf/php-fpm.ini ]; then
-    echo "Custom php-fpm found"
     php $BP_DIR/support/merge_conf.php $BP_DIR/conf/php-fpm.ini .buildpack/php-fpm/conf/php-fpm.ini $PHP_PATH/php-fpm.ini
 else
     cp $BP_DIR/conf/php-fpm.ini $PHP_PATH
