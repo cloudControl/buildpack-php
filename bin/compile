@@ -18,7 +18,6 @@
 
 set -eo pipefail
 
-echo "DEBUG"
 
 indent_head() {
     sed -u "s/^/-----> /"
@@ -51,6 +50,8 @@ cd $BUILD_DIR
 if [[ -f .buildpack/envrc ]]; then
     source .buildpack/envrc
 fi
+
+echo "DEBUG"
 
 # move everything in BUILD_DIR except buildpack-specific files to PROJECT_ROOT
 TMP=$(mktemp -d --tmpdir=.)
