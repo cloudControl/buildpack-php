@@ -18,6 +18,8 @@
 
 set -eo pipefail
 
+echo "DEBUG"
+
 indent_head() {
     sed -u "s/^/-----> /"
 }
