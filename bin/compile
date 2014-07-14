@@ -75,12 +75,13 @@ if [[ -f $PROJECT_ROOT/composer.json ]]; then
         cp -R $CACHE_DIR/$dir $PROJECT_ROOT/ &> /dev/null || true
     done
 
+    echo "DEBUG1"
     # Install composer
     if [[ ! -f $PROJECT_ROOT/composer.phar ]]; then
         curl --remote-name --silent https://getcomposer.org/installer
         php installer --quiet --install-dir=$PROJECT_ROOT
     fi
-    echo "DEBUG1"
+    echo "DEBUG2"
 
     php $PROJECT_ROOT/composer.phar install $COMPOSER_INSTALL_ARGS -n -d $PROJECT_ROOT/ | indent
 
@@ -94,7 +95,6 @@ if [[ -f $PROJECT_ROOT/composer.json ]]; then
     done
 fi
 
-echo "DEBUG2"
 
 if [[ $PAAS_VENDOR = "cloudControl" ]]; then
     PROJECT_CCCONFIG=$PROJECT_ROOT/.ccconfig.yaml
