@@ -84,7 +84,7 @@ if [[ -f $PROJECT_ROOT/composer.json ]]; then
     fi
     echo "DEBUG2"
 
-    php $PROJECT_ROOT/composer.phar install $COMPOSER_INSTALL_ARGS -n -d $PROJECT_ROOT/ | indent
+    php $PROJECT_ROOT/composer.phar install $COMPOSER_INSTALL_ARGS -n -d $PROJECT_ROOT/ > /dev/null 2>&1 | indent
 
     # Clean the Image
     rm $PROJECT_ROOT/composer.phar
