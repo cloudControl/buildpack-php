@@ -80,7 +80,8 @@ if [[ -f $PROJECT_ROOT/composer.json ]]; then
     if [[ ! -f $PROJECT_ROOT/composer.phar ]]; then
         curl --remote-name --silent https://getcomposer.org/installer
         echo "DEBUGmiddle"
-        php installer --quiet --install-dir=$PROJECT_ROOT > /dev/null 2>&1
+        ls -all $PROJECT_ROOT
+        php installer --quiet --install-dir=$PROJECT_ROOT
     fi
     echo "DEBUG2"
 
