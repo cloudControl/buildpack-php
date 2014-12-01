@@ -37,6 +37,8 @@ BP_DIR=$(readlink -f $(dirname $BIN_DIR))
 BUILD_DIR=$1
 CACHE_DIR=$2
 
+export CACHE_DIR
+
 APACHE_PATH="$BUILD_DIR/apache"
 PHP_PATH="$BUILD_DIR/php"
 
