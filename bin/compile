@@ -73,7 +73,9 @@ if [[ -f $PROJECT_ROOT/composer.json ]]; then
         if [[ -e $PROJECT_ROOT/$dir ]]; then
             cp -R $PROJECT_ROOT/$dir $CACHE_DIR/ &> /dev/null || true
         fi
-        cp -R $CACHE_DIR/$dir $PROJECT_ROOT/ &> /dev/null || true
+        
+        mkdir -p $PROJECT_ROOT/$dir
+        cp -R $CACHE_DIR/${dir##*/}/* $PROJECT_ROOT/$dir/ &> /dev/null || true
     done
 
     # Install composer
@@ -89,7 +91,7 @@ if [[ -f $PROJECT_ROOT/composer.json ]]; then
 
     # Caching: post-install
     for dir in $CACHED_DIRS; do
-        rm -rf $CACHE_DIR/$dir
+        rm -rf $CACHE_DIR/${dir##*/}
         cp -R $PROJECT_ROOT/$dir $CACHE_DIR/
     done
 fi
