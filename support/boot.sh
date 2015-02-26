@@ -46,10 +46,9 @@ if [[ "$PAAS_VENDOR" = "cloudControl" ]]; then
 EOF
 fi
 
-# FIXME detect abnormal php-fpm exit
 php5-fpm --fpm-config /app/php/php-fpm.ini &
 phppid=$!
 apache2 -f /app/apache/conf/httpd.conf -D FOREGROUND &
 apachepid=$!
-wait $apachepid
+wait -n $phppid $apachepid
 
