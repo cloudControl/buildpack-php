@@ -52,6 +52,8 @@ if [[ -f .buildpack/envrc ]]; then
     source .buildpack/envrc
 fi
 
+source $BIN_DIR/util/blackfire.sh
+
 # move everything in BUILD_DIR except buildpack-specific files to PROJECT_ROOT
 TMP=$(mktemp -d --tmpdir=.)
 find . -mindepth 1 -maxdepth 1 -not -regex "./Procfile\|$TMP\|./.buildpack" -exec mv --target-directory="$TMP" '--' '{}' +
@@ -61,10 +63,23 @@ ln -s code www
 mkdir -p $APACHE_PATH/logs
 mkdir -p $APACHE_PATH/conf/{share,local,user}
 mkdir -p $PHP_PATH/{box,conf,logs}
+mkdir -p $BUILD_DIR/.profile.d
 
 cp $BP_DIR/support/boot.sh .
 
+# Install extensions
+exts=()
+if [[ -f "$PROJECT_ROOT/composer.json" ]]; then
+    exts=($(cat $PROJECT_ROOT/composer.json | python -c 'from __future__ import print_function; import sys, json; { print(key[4:].lower()) for key in json.load(sys.stdin)["require"] if key.startswith("ext-")}' 2> /dev/null || true)) # convert to array
+fi
+
+if [[ ${exts[*]} =~ "blackfire" ]]; then
+    install_blackfire
+fi
+
 if [[ -f $PROJECT_ROOT/composer.json ]]; then
+    echo "Installing composer dependencies..." | indent_head
+
     # Caching: pre-install
     CACHED_DIRS=$(cat $PROJECT_ROOT/composer.json | jq -e -r '.config["vendor-dir"]') || CACHED_DIRS="vendor"
 

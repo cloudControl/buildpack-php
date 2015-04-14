@@ -7,7 +7,6 @@ This is the [cloudControl PaaS](https://www.cloudcontrol.com) PHP buildpack conf
 For example the 'composer.json' file, for a project that uses the Zend
 framework, would look like this:
 ~~~json
-
 {
     "name": "application-name",
     "description": "Application's description",
@@ -25,6 +24,18 @@ framework, would look like this:
 ~~~
 
 It is also possible to include composer executable (composer.phar) in the top directory of the project. In this case provided composer executable will be used instead of platform default one.
+
+### Extensions
+The buildpack comes pre-configured with the following PHP extensions:
+
+* [Blackfire](https://blackfire.io/) - Blackfire Profiler automatically instruments your code to gather data about consumed server resources like memory, CPU time, and I/O.
+
+For example, to enable the Blackfire extension, add 'ext-blackfire' to the 'require' section of your 'composer.json' file:
+~~~json
+    "require": {
+        "ext-blackfire": "*"
+    }
+~~~
 
 ## Frameworks
 The following frameworks are currently supported:
