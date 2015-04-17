@@ -18,20 +18,6 @@
 
 set -eo pipefail
 
-indent_head() {
-    sed -u "s/^/-----> /"
-}
-
-indent() {
-    sed -u "s/^/       /"
-}
-
-# parameters: $ABSOLUTE_DIR
-function clean_directory() {
-    rm -rf $1
-    mkdir $1
-}
-
 BIN_DIR=$(readlink -f $(dirname $0))
 BP_DIR=$(readlink -f $(dirname $BIN_DIR))
 BUILD_DIR=$1
@@ -46,6 +32,10 @@ CODE_DIR=code
 PROJECT_ROOT=$BUILD_DIR/$CODE_DIR
 
 cd $BUILD_DIR
+
+source $BIN_DIR/util/helper.sh
+source $BIN_DIR/util/framework.sh
+source $BIN_DIR/util/deprecated.sh
 
 # Load buildpack environment
 if [[ -f .buildpack/envrc ]]; then
@@ -111,100 +101,9 @@ if [[ -f $PROJECT_ROOT/composer.json ]]; then
     done
 fi
 
-if [[ $PAAS_VENDOR = "cloudControl" ]]; then
-    PROJECT_CCCONFIG=$PROJECT_ROOT/.ccconfig.yaml
-
-    TMP=$(grep -E -o 'WebContent.*[^[:space:]]' $PROJECT_CCCONFIG 2>/dev/null | sed 's/WebContent *: *//' || echo "")
-    if [[ TMP ]]; then
-        WEBCONTENT="$TMP"
-    fi
-fi
-
-# Framework detection
-pushd $PROJECT_ROOT &> /dev/null
-FRAMEWORK=$($BIN_DIR/detect $PROJECT_ROOT)
-
-case $FRAMEWORK in
-
-"PHP/Symfony1")
-    echo "Symfony 1.x detected" | indent_head
-    WEBCONTENT=${WEBCONTENT:-'web'}
-    cp $BP_DIR/conf/symfony1.x.conf $APACHE_PATH/conf/share/50-symfony1.x.conf
-    clean_directory cache
-    ;;
-"PHP/Symfony2")
-    echo "Symfony 2.x detected" | indent_head
-    WEBCONTENT=${WEBCONTENT:-'web'}
-    clean_directory app/cache
-    clean_directory app/logs
-    ;;
-"PHP/Zend1")
-    echo "Zend 1.x Framework detected" | indent_head
-    WEBCONTENT=${WEBCONTENT:-'public'}
-    ;;
-"PHP/Zend2")
-    echo "Zend 2.x Framework detected" | indent_head
-    WEBCONTENT=${WEBCONTENT:-'public'}
-    ;;
-"PHP/Yii")
-    echo "Yii Framework detected" | indent_head
-    for d in $(find . -maxdepth 1 -type d); do
-        if [[ -f $d/index.php && -d $d/protected ]]; then
-            webroot="$d"
-        fi
-    done
-    WEBCONTENT=${WEBCONTENT:-$webroot}
-    if [[ ! "$WEBCONTENT" ]]; then
-        echo "ERROR: Failed to auto-detect web content." | indent
-        exit 1
-    fi
-    if [[ ! -d $WEBCONTENT/protected/runtime ]]; then
-        echo "Required directory missing, creating '$WEBCONTENT/protected/runtime'." | indent
-        mkdir $PROJECT_ROOT/$WEBCONTENT/protected/runtime
-    fi
-    if [[ ! -d $WEBCONTENT/assets ]]; then
-        echo "Required directory missing, creating '$WEBCONTENT/assets'." | indent
-        mkdir $WEBCONTENT/assets
-    fi
-    ;;
-"PHP/Kohana")
-    echo "Kohana Framework detected" | indent_head
-    WEBCONTENT=${WEBCONTENT:-''}
-    clean_directory application/cache
-    clean_directory application/logs
-    ;;
-"PHP/CakePhp")
-    echo "CakePhp Framework detected" | indent_head
-    if [[ ! -f app/Config/core.php ]]; then
-        echo "ERROR: in order to run your application you need the configuration file. Please check your .gitignore file." | indent
-        exit 1
-    fi
-    clean_directory app/tmp
-    # this is the origin folder structure, that should be created
-    # app/tmp/
-    # ├── cache
-    # │   ├── models
-    # │   ├── persistent
-    # │   └── views
-    # ├── logs
-    # ├── sessions
-    # └── tests
-    mkdir -p app/tmp/{logs,cache,sessions,tests}
-    mkdir -p app/tmp/cache/{models,persistent,views}
-    ;;
-*)
-    WEBCONTENT=${WEBCONTENT:-''}
-    ;;
-esac
-
-popd &> /dev/null
-
-if [[ $PAAS_VENDOR = "cloudControl" ]]; then
-    # compatibility for luigi stack
-    if [[ ! -f "$PROJECT_CCCONFIG" ]]; then
-        echo -e "BaseConfig:\n  WebContent: /$WEBCONTENT" > $PROJECT_CCCONFIG
-    fi
-fi
+check_ccconfig
+framework_detection
+check_luigi
 
 # set default values if not defined in user custom configuration files
 if ! grep -q -s "DocumentRoot" .buildpack/apache/conf/*.conf ; then
@@ -212,11 +111,11 @@ if ! grep -q -s "DocumentRoot" .buildpack/apache/conf/*.conf ; then
     echo "DocumentRoot \"$DOCUMENT_ROOT\"" > $APACHE_PATH/conf/share/documentroot.conf
     cat >> $APACHE_PATH/conf/share/documentroot.conf <<EOF
 <Directory "$DOCUMENT_ROOT">
-    AllowOverride All
-    Options SymlinksIfOwnerMatch
-    Order Deny,Allow
-    Allow from All
-    DirectoryIndex index.php index.html index.htm
+	AllowOverride All
+	Options SymlinksIfOwnerMatch
+	Order Deny,Allow
+	Allow from All
+	DirectoryIndex index.php index.html index.htm
 </Directory>
 EOF
 fi
@@ -229,9 +128,7 @@ fi
 
 cp $BP_DIR/conf/php.ini $PHP_PATH/conf/010_php.ini
 
-for f in /etc/php5/conf.d/*.ini; do
-    cp $f $PHP_PATH/conf/000_`basename $f`;
-done
+copy_default_config
 
 if [ -d .buildpack/php/conf ]; then
     cp .buildpack/php/conf/*.ini $PHP_PATH/conf/
@@ -242,7 +139,4 @@ if [ -d .buildpack/apache/conf ]; then
     cp .buildpack/apache/conf/* $APACHE_PATH/conf/user
 fi
 
-if [[ $PAAS_VENDOR = "cloudControl" ]]; then
-    echo "[APC]" > $PHP_PATH/conf/cctrl_apc.ini
-    grep -E -o 'apc.*[^[:space:]]' $PROJECT_CCCONFIG | sed 's/apcEnabled/apc.enabled/;s/apcShmSize/apc.shm_size/;s/apcStat/apc.stat/;s/:/ =/' >> $PHP_PATH/conf/cctrl_apc.ini || rm $PHP_PATH/conf/cctrl_apc.ini
-fi
+configure_apc
