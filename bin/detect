@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright 2012 cloudControl GmbH
+# Copyright 2014 cloudControl GmbH
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,19 +17,19 @@
 cd $1
 
 if [[ -e app/console && -d vendor && -d web ]]; then
-    echo "PHP/Symfony2"
+  echo "PHP/Symfony2"
 elif [[ -f symfony && -d web ]]; then
-    echo "PHP/Symfony1"
+  echo "PHP/Symfony1"
 elif [[ -f library/Zend/Application.php && -d application && -d public ]]; then
-    echo "PHP/Zend1"
+  echo "PHP/Zend1"
 elif [[ -f public/index.php && $(grep 'Zend\\Mvc\\Application::init' public/index.php) ]]; then
-    echo "PHP/Zend2"  # Zend 2.x created via ZendSkeletonApplication
+  echo "PHP/Zend2"  # Zend 2.x created via ZendSkeletonApplication
 elif [[ -f framework/yii.php ]]; then
-    echo "PHP/Yii"
+  echo "PHP/Yii"
 elif [[ (-f system/classes/kohana.php || -f system/classes/Kohana.php) && -d application ]]; then
-    echo "PHP/Kohana"
+  echo "PHP/Kohana"
 elif [[ -f app/Console/cake ]]; then
-    echo "PHP/CakePhp"
+  echo "PHP/CakePhp"
 else
-    echo "PHP"
+  echo "PHP"
 fi
