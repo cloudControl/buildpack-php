@@ -62,21 +62,18 @@ mkdir -p $BUILD_DIR/.profile.d
 
 cp $BP_DIR/support/boot.sh .
 
-# Install extensions
-exts=()
-if [[ -f "$PROJECT_ROOT/composer.json" ]]; then
-  exts=($(cat $PROJECT_ROOT/composer.json | python -c 'from __future__ import print_function; import sys, json; { print(key[4:].lower()) for key in json.load(sys.stdin)["require"] if key.startswith("ext-")}' 2> /dev/null || true)) # convert to array
-fi
-
-if [[ ${exts[*]} =~ "blackfire" ]]; then
-  install_blackfire
-fi
 
 if [[ -f $PROJECT_ROOT/composer.json ]]; then
-  echo "Installing composer dependencies..." | indent_head
+  # Install extensions
+  exts=($($BP_DIR/bin/jq -r '.require | keys | map(select(startswith("ext-"))) | map(.[4:])|.[]' $PROJECT_ROOT/composer.json))
+
+  if [[ ${exts[*]} =~ "blackfire" ]]; then
+    install_blackfire
+  fi
+  
 
   # Caching: pre-install
-  CACHED_DIRS=$(cat $PROJECT_ROOT/composer.json | jq -e -r '.config["vendor-dir"]') || CACHED_DIRS="vendor"
+  CACHED_DIRS=$(cat $PROJECT_ROOT/composer.json | $BP_DIR/bin/jq -e -r '.config["vendor-dir"]') || CACHED_DIRS="vendor"
 
   mkdir -p $CACHE_DIR
   for dir in $CACHED_DIRS; do
@@ -89,6 +86,7 @@ if [[ -f $PROJECT_ROOT/composer.json ]]; then
   done
 
   # Install composer
+  echo "Installing composer dependencies..." | indent_head
   if [[ ! -f $PROJECT_ROOT/composer.phar ]]; then
     curl --remote-name --silent https://getcomposer.org/installer
     php installer --quiet --install-dir=$PROJECT_ROOT
