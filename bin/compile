@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright 2012 cloudControl GmbH
+# Copyright 2014 cloudControl GmbH
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ source $BIN_DIR/util/deprecated.sh
 
 # Load buildpack environment
 if [[ -f .buildpack/envrc ]]; then
-    source .buildpack/envrc
+  source .buildpack/envrc
 fi
 
 source $BIN_DIR/util/blackfire.sh
@@ -60,45 +60,45 @@ cp $BP_DIR/support/boot.sh .
 # Install extensions
 exts=()
 if [[ -f "$PROJECT_ROOT/composer.json" ]]; then
-    exts=($(cat $PROJECT_ROOT/composer.json | python -c 'from __future__ import print_function; import sys, json; { print(key[4:].lower()) for key in json.load(sys.stdin)["require"] if key.startswith("ext-")}' 2> /dev/null || true)) # convert to array
+  exts=($(cat $PROJECT_ROOT/composer.json | python -c 'from __future__ import print_function; import sys, json; { print(key[4:].lower()) for key in json.load(sys.stdin)["require"] if key.startswith("ext-")}' 2> /dev/null || true)) # convert to array
 fi
 
 if [[ ${exts[*]} =~ "blackfire" ]]; then
-    install_blackfire
+  install_blackfire
 fi
 
 if [[ -f $PROJECT_ROOT/composer.json ]]; then
-    echo "Installing composer dependencies..." | indent_head
+  echo "Installing composer dependencies..." | indent_head
 
-    # Caching: pre-install
-    CACHED_DIRS=$(cat $PROJECT_ROOT/composer.json | jq -e -r '.config["vendor-dir"]') || CACHED_DIRS="vendor"
+  # Caching: pre-install
+  CACHED_DIRS=$(cat $PROJECT_ROOT/composer.json | jq -e -r '.config["vendor-dir"]') || CACHED_DIRS="vendor"
 
-    mkdir -p $CACHE_DIR
-    for dir in $CACHED_DIRS; do
-        if [[ -e $PROJECT_ROOT/$dir ]]; then
-            cp -R $PROJECT_ROOT/$dir $CACHE_DIR/ &> /dev/null || true
-        fi
-        
-        mkdir -p $PROJECT_ROOT/$dir
-        cp -R $CACHE_DIR/${dir##*/}/* $PROJECT_ROOT/$dir/ &> /dev/null || true
-    done
-
-    # Install composer
-    if [[ ! -f $PROJECT_ROOT/composer.phar ]]; then
-        curl --remote-name --silent https://getcomposer.org/installer
-        php installer --quiet --install-dir=$PROJECT_ROOT
+  mkdir -p $CACHE_DIR
+  for dir in $CACHED_DIRS; do
+    if [[ -e $PROJECT_ROOT/$dir ]]; then
+      cp -R $PROJECT_ROOT/$dir $CACHE_DIR/ &> /dev/null || true
     fi
+    
+    mkdir -p $PROJECT_ROOT/$dir
+    cp -R $CACHE_DIR/${dir##*/}/* $PROJECT_ROOT/$dir/ &> /dev/null || true
+  done
 
-    php $PROJECT_ROOT/composer.phar install $COMPOSER_INSTALL_ARGS -n -d $PROJECT_ROOT/ | indent
+  # Install composer
+  if [[ ! -f $PROJECT_ROOT/composer.phar ]]; then
+    curl --remote-name --silent https://getcomposer.org/installer
+    php installer --quiet --install-dir=$PROJECT_ROOT
+  fi
 
-    # Clean the Image
-    rm $PROJECT_ROOT/composer.phar
+  php $PROJECT_ROOT/composer.phar install $COMPOSER_INSTALL_ARGS -n -d $PROJECT_ROOT/ | indent
 
-    # Caching: post-install
-    for dir in $CACHED_DIRS; do
-        rm -rf $CACHE_DIR/${dir##*/}
-        cp -R $PROJECT_ROOT/$dir $CACHE_DIR/
-    done
+  # Clean the Image
+  rm $PROJECT_ROOT/composer.phar
+
+  # Caching: post-install
+  for dir in $CACHED_DIRS; do
+    rm -rf $CACHE_DIR/${dir##*/}
+    cp -R $PROJECT_ROOT/$dir $CACHE_DIR/
+  done
 fi
 
 check_ccconfig
@@ -107,23 +107,23 @@ check_luigi
 
 # set default values if not defined in user custom configuration files
 if ! grep -q -s "DocumentRoot" .buildpack/apache/conf/*.conf ; then
-    DOCUMENT_ROOT="/app/code/$WEBCONTENT"
-    echo "DocumentRoot \"$DOCUMENT_ROOT\"" > $APACHE_PATH/conf/share/documentroot.conf
-    cat >> $APACHE_PATH/conf/share/documentroot.conf <<EOF
+  DOCUMENT_ROOT="/app/code/$WEBCONTENT"
+  echo "DocumentRoot \"$DOCUMENT_ROOT\"" > $APACHE_PATH/conf/share/documentroot.conf
+  cat >> $APACHE_PATH/conf/share/documentroot.conf <<EOF
 <Directory "$DOCUMENT_ROOT">
-	AllowOverride All
-	Options SymlinksIfOwnerMatch
-	Order Deny,Allow
-	Allow from All
-	DirectoryIndex index.php index.html index.htm
+  AllowOverride All
+  Options SymlinksIfOwnerMatch
+  Order Deny,Allow
+  Allow from All
+  DirectoryIndex index.php index.html index.htm
 </Directory>
 EOF
 fi
 
 if [ -f .buildpack/php-fpm/conf/php-fpm.ini ]; then
-    php $BP_DIR/support/merge_conf.php $BP_DIR/conf/php-fpm.ini .buildpack/php-fpm/conf/php-fpm.ini $PHP_PATH/php-fpm.ini
+  php $BP_DIR/support/merge_conf.php $BP_DIR/conf/php-fpm.ini .buildpack/php-fpm/conf/php-fpm.ini $PHP_PATH/php-fpm.ini
 else
-    cp $BP_DIR/conf/php-fpm.ini $PHP_PATH
+  cp $BP_DIR/conf/php-fpm.ini $PHP_PATH
 fi
 
 cp $BP_DIR/conf/php.ini $PHP_PATH/conf/010_php.ini
@@ -131,12 +131,12 @@ cp $BP_DIR/conf/php.ini $PHP_PATH/conf/010_php.ini
 copy_default_config
 
 if [ -d .buildpack/php/conf ]; then
-    cp .buildpack/php/conf/*.ini $PHP_PATH/conf/
+  cp .buildpack/php/conf/*.ini $PHP_PATH/conf/
 fi
 
 cp $BP_DIR/conf/httpd.conf $APACHE_PATH/conf
 if [ -d .buildpack/apache/conf ]; then
-    cp .buildpack/apache/conf/* $APACHE_PATH/conf/user
+  cp .buildpack/apache/conf/* $APACHE_PATH/conf/user
 fi
 
 configure_apc
