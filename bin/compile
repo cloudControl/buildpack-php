@@ -18,6 +18,11 @@
 
 set -eo pipefail
 
+if [ "$#" -ne 2 ]; then
+  echo "usage: bin/compile <build-dir> <cache-dir>"
+  exit 1
+fi
+
 BIN_DIR=$(readlink -f $(dirname $0))
 BP_DIR=$(readlink -f $(dirname $BIN_DIR))
 BUILD_DIR=$1
