@@ -1,0 +1,24 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  config.vm.box = "ubuntu/precise64"
+
+  config.vm.provider "virtualbox" do |v|
+    v.memory = 1024
+  end
+  
+  config.vm.define "php-5.4.39" do |web|
+    config.vm.provision "shell", path: "php-5.4.39.sh"
+  end
+
+  config.vm.define "php-5.5.23" do |web|
+    config.vm.provision "shell", path: "php-5.5.23.sh"
+  end
+
+  config.vm.define "php-5.5.24" do |web|
+    config.vm.provision "shell", path: "php-5.5.24.sh"
+  end
+end
