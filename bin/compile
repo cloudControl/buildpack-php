@@ -32,6 +32,7 @@ export CACHE_DIR
 
 APACHE_PATH="$BUILD_DIR/apache"
 PHP_PATH="$BUILD_DIR/php"
+PHP_CONFIGS_PATH="${PHP_PATH}/conf"
 
 CODE_DIR=code
 PROJECT_ROOT=$BUILD_DIR/$CODE_DIR
@@ -62,7 +63,6 @@ mkdir -p $BUILD_DIR/.profile.d
 
 cp $BP_DIR/support/boot.sh .
 
-
 if [[ -f $PROJECT_ROOT/composer.json ]]; then
   # Install extensions
   exts=($($BP_DIR/bin/jq -r '.require | keys | map(select(startswith("ext-"))) | map(.[4:])|.[]' $PROJECT_ROOT/composer.json))
@@ -70,7 +70,6 @@ if [[ -f $PROJECT_ROOT/composer.json ]]; then
   if [[ ${exts[*]} =~ "blackfire" ]]; then
     install_blackfire
   fi
-  
 
   # Caching: pre-install
   CACHED_DIRS=$($BP_DIR/bin/jq -e -r '.config["vendor-dir"]' $PROJECT_ROOT/composer.json) || CACHED_DIRS="vendor"
@@ -80,16 +79,50 @@ if [[ -f $PROJECT_ROOT/composer.json ]]; then
     if [[ -e $PROJECT_ROOT/$dir ]]; then
       cp -R $PROJECT_ROOT/$dir $CACHE_DIR/ &> /dev/null || true
     fi
-    
+
     mkdir -p $PROJECT_ROOT/$dir
     cp -R $CACHE_DIR/${dir##*/}/* $PROJECT_ROOT/$dir/ &> /dev/null || true
   done
 
+  # Check for custom php version
+  PHP_VERSION_CHECK=$($BP_DIR/bin/jq --raw-output '.require | .["php-64bit"]' $PROJECT_ROOT/composer.json)
+  if [[ $PHP_VERSION_NUMBER == "5.4.39" || $PHP_VERSION_NUMBER == "5.4.42" || $PHP_VERSION_NUMBER == "5.5.23" || $PHP_VERSION_NUMBER == "5.5.26" || $PHP_VERSION_NUMBER == "5.6.10" ]]; then
+    PHP_VERSION=php-${PHP_VERSION_NUMBER}
+    PHP_CONFIGS_PATH="/srv/www/${PHP_VERSION}/etc/conf.d"
+
+    echo "Using php version ${PHP_VERSION_NUMBER}" | indent_head
+    curl --silent --location "https://packages.${DOMAIN}/buildpack-php/${PHP_VERSION}.tar.bz2" | tar jx
+    
+    ln -s ${BUILD_DIR}/${PHP_VERSION} /srv/www/${PHP_VERSION}
+    echo "export PATH=/srv/www/${PHP_VERSION}/sbin:/srv/www/${PHP_VERSION}/bin:\$PATH" > .profile.d/php.sh
+    source .profile.d/php.sh
+
+    cp $BP_DIR/opt/boot.sh $BUILD_DIR/boot.sh
+
+    for ext in "${exts[@]}"; do
+      echo "Loading extension: ${ext}" | indent_head
+      echo "extension = ${ext}.so" >> ${PHP_CONFIGS_PATH}/extensions.ini
+    done
+
+    if [ -d .buildpack/php/conf ]; then
+      cp .buildpack/php/conf/*.ini ${PHP_CONFIGS_PATH}/
+    fi
+  else
+    echo "WARN: PHP definition found ${PHP_VERSION} which is not available" | indent_head
+  fi
+
   # Install composer
   echo "Installing composer dependencies..." | indent_head
   if [[ ! -f $PROJECT_ROOT/composer.phar ]]; then
-    curl --remote-name --silent https://getcomposer.org/installer
+    curl --remote-name --silent --show-error https://getcomposer.org/installer
     php installer --quiet --install-dir=$PROJECT_ROOT
+
+    # We do not delete the installer in the legacy build
+    # as soon as we have only the custom build the if clause
+    # can be deleted and the installer can be removed always
+    if [[ -n "${PHP_VERSION}" ]]; then
+      rm installer
+    fi
   fi
 
   php $PROJECT_ROOT/composer.phar install $COMPOSER_INSTALL_ARGS -n -d $PROJECT_ROOT/ | indent
@@ -104,9 +137,15 @@ if [[ -f $PROJECT_ROOT/composer.json ]]; then
   done
 fi
 
-check_ccconfig
+if [[ -z "${PHP_VERSION}" ]]; then
+  check_ccconfig
+fi
+
 framework_detection
-check_luigi
+
+if [[ -z "${PHP_VERSION}" ]]; then
+  check_luigi
+fi
 
 # set default values if not defined in user custom configuration files
 if ! grep -q -s "DocumentRoot" .buildpack/apache/conf/*.conf ; then
@@ -129,12 +168,14 @@ else
   cp $BP_DIR/conf/php-fpm.ini $PHP_PATH
 fi
 
-cp $BP_DIR/conf/php.ini $PHP_PATH/conf/010_php.ini
+if [[ -z "${PHP_VERSION}" ]]; then
+  cp $BP_DIR/conf/php.ini ${PHP_CONFIGS_PATH}/010_php.ini
 
-copy_default_config
+  copy_default_config
 
-if [ -d .buildpack/php/conf ]; then
-  cp .buildpack/php/conf/*.ini $PHP_PATH/conf/
+  if [ -d .buildpack/php/conf ]; then
+    cp .buildpack/php/conf/*.ini ${PHP_CONFIGS_PATH}/
+  fi
 fi
 
 cp $BP_DIR/conf/httpd.conf $APACHE_PATH/conf
@@ -142,4 +183,6 @@ if [ -d .buildpack/apache/conf ]; then
   cp .buildpack/apache/conf/* $APACHE_PATH/conf/user
 fi
 
-configure_apc
+if [[ -z "${PHP_VERSION}" ]]; then
+  configure_apc
+fi

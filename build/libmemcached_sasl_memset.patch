@@ -1,0 +1,10 @@
+--- a/libmemcached/sasl.cc
++++ b/libmemcached/sasl.cc
+@@ -171,6 +171,7 @@
+   memcached_server_response_increment(server);
+ 
+   char mech[MEMCACHED_MAX_BUFFER];
++  memset(mech, 0, sizeof(mech));
+   memcached_return_t rc= memcached_response(server, mech, sizeof(mech), NULL);
+   if (memcached_failed(rc))
+   {
