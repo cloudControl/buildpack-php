@@ -49,6 +49,7 @@ if [[ -f .buildpack/envrc ]]; then
 fi
 
 source $BIN_DIR/util/blackfire.sh
+source $BIN_DIR/util/newrelic.sh
 
 # move everything in BUILD_DIR except buildpack-specific files to PROJECT_ROOT
 TMP=$(mktemp -d --tmpdir=.)
@@ -97,6 +98,13 @@ if [[ -f $PROJECT_ROOT/composer.json ]]; then
     echo "export PATH=/srv/www/${PHP_VERSION}/sbin:/srv/www/${PHP_VERSION}/bin:$PATH" > .profile.d/php.sh
     source .profile.d/php.sh
 
+    mkdir bin
+    cp $BP_DIR/bin/jq bin
+
+    if [[ ${exts[*]} =~ "newrelic" ]]; then
+      install_newrelic
+    fi
+
     cp $BP_DIR/opt/boot.sh $BUILD_DIR/boot.sh
 
     for ext in "${exts[@]}"; do
@@ -125,6 +133,12 @@ if [[ -f $PROJECT_ROOT/composer.json ]]; then
 
   # Clean the Image
   rm $PROJECT_ROOT/composer.phar
+
+  if [[ -n "${PHP_VERSION}" ]]; then
+    if [[ ${exts[*]} =~ "newrelic" ]]; then
+      finalize_newrelic
+    fi
+  fi
 
   # Caching: post-install
   for dir in $CACHED_DIRS; do
