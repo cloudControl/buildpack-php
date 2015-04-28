@@ -59,4 +59,7 @@ else
   echo "Blackfire credentials unavailable - extension disabled"
 fi
 EOF
+
+  # We have to ignore the platform requirements otherwise composer will fail
+  COMPOSER_INSTALL_ARGS="$COMPOSER_INSTALL_ARGS --ignore-platform-reqs"
 }
