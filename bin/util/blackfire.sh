@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
 install_blackfire() {
+  echo "Installing blackfire ..."
+
   # fail hard
   set -eo pipefail
 
@@ -8,7 +10,7 @@ install_blackfire() {
   bin_dir=${BUILD_DIR}/bin
 
   # Download the probe
-  probe_version=`curl -A "cloudControl" -o probe.tar.gz -D - -L -s https://blackfire.io/api/v1/releases/probe/php/linux/amd64/${PHP_MAJOR_VERSION:=5}${PHP_MINOR_VERSION:=4} | grep 'X-Blackfire-Release-Version: ' | sed "s%X-Blackfire-Release-Version: %%" | sed s%.$%%`
+  probe_version=`curl --show-error -A "cloudControl" -o probe.tar.gz -D - -L -s https://blackfire.io/api/v1/releases/probe/php/linux/amd64/${PHP_MAJOR_VERSION:=5}${PHP_MINOR_VERSION:=4} | grep 'X-Blackfire-Release-Version: ' | sed "s%X-Blackfire-Release-Version: %%" | sed s%.$%%`
   echo "Packaging ext/blackfire ${probe_version} (for Zend module API version ${ZEND_MODULE_API_VERSION})..." | indent_head
 
   mkdir -p ${ext_dir}
