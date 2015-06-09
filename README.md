@@ -165,7 +165,16 @@ In order to override or extend it, you should create file named `php-fpm.ini` un
 the `.buildpack/php-fpm/conf/` directory and set your preffered setting under the
 appropriate section like this:
 
+    [global]
+    ; error_log = /app/php/logs/php-fpm-error.log
+    error_log = /srv/www/code/data/logs/php-fpm-error.log
+    
+    ; Log level, possible values: alert, error, warning, notice, debug
+    ; Default value: notice
+    log_level = debug
+    
     [www]
     pm = dynamic
     pm.start_servers = 1
     pm.max_children = 5
+    slowlog = /srv/www/code/data/logs/php-fpm-slow.log
