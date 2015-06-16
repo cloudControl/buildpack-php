@@ -16,7 +16,7 @@
 
 cd $1
 
-if [[ -e app/console && -d vendor && -d web ]]; then
+if [[ (-e app/console || -e bin/console) && -d vendor && -d web ]]; then
   echo "PHP/Symfony2"
 elif [[ -f symfony && -d web ]]; then
   echo "PHP/Symfony1"
