@@ -78,6 +78,7 @@ cd ..
 /srv/www/${PHP_VERSION}/bin/pear channel-update pear.php.net
 /srv/www/${PHP_VERSION}/bin/pear install channel://pear.php.net/Net_URL2-0.3.1 || true
 /srv/www/${PHP_VERSION}/bin/pear install channel://pear.php.net/HTTP_Request2-0.5.2 || true
+echo "\n\n" | /srv/www/${PHP_VERSION}/bin/pear install channel://pecl.php.net/apcu-4.0.7
 
 printf "\n" | /srv/www/${PHP_VERSION}/bin/pecl install mongo || true
 /srv/www/${PHP_VERSION}/bin/pecl install oauth || true
