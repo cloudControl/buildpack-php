@@ -87,7 +87,7 @@ if [[ -f $PROJECT_ROOT/composer.json ]]; then
 
   # Check for custom php version
   PHP_VERSION_CHECK=$($BP_DIR/bin/jq --raw-output '.require | .["php-64bit"]' $PROJECT_ROOT/composer.json)
-  if [[ $PHP_VERSION_CHECK == "5.5.23" || $PHP_VERSION_CHECK == "5.4.39" || $PHP_VERSION_CHECK == "5.6.10" ]]; then
+  if [[ $PHP_VERSION_CHECK == "5.4.39" || $PHP_VERSION_CHECK == "5.4.42" || $PHP_VERSION_CHECK == "5.5.23" || $PHP_VERSION_CHECK == "5.6.10" ]]; then
     PHP_VERSION=php-${PHP_VERSION_CHECK}
     PHP_CONFIGS_PATH="/srv/www/${PHP_VERSION}/etc/conf.d"
 
