@@ -95,7 +95,8 @@ if [[ -f $PROJECT_ROOT/composer.json ]]; then
     curl --silent --location "https://packages.${DOMAIN}/buildpack-php/${PHP_VERSION}.tar.bz2" | tar jx
     
     ln -s ${BUILD_DIR}/${PHP_VERSION} /srv/www/${PHP_VERSION}
-    echo "export PATH=/srv/www/${PHP_VERSION}/sbin:/srv/www/${PHP_VERSION}/bin:$PATH" > .profile.d/php.sh
+    echo "unset PHP_INI_SCAN_DIR" > .profile.d/php.sh
+    echo "export PATH=/srv/www/${PHP_VERSION}/sbin:/srv/www/${PHP_VERSION}/bin:$PATH" >> .profile.d/php.sh
     source .profile.d/php.sh
 
     mkdir bin
