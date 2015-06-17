@@ -98,6 +98,7 @@ if [[ -f $PROJECT_ROOT/composer.json ]]; then
     echo "unset PHP_INI_SCAN_DIR" > .profile.d/php.sh
     echo "export PATH=/srv/www/${PHP_VERSION}/sbin:/srv/www/${PHP_VERSION}/bin:$PATH" >> .profile.d/php.sh
     source .profile.d/php.sh
+    cp $BP_DIR/opt/.bashrc .
 
     mkdir bin
     cp $BP_DIR/bin/jq bin
