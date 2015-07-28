@@ -9,28 +9,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provider "virtualbox" do |v|
     v.memory = 1024
   end
-  
-  config.vm.define "php-5.4.39" do |web|
-    config.vm.provision "shell", path: "php-5.4.39.sh"
-  end
-  
-  config.vm.define "php-5.4.42" do |web|
-    config.vm.provision "shell", path: "php-5.4.42.sh"
-  end
 
-  config.vm.define "php-5.5.23" do |web|
-    config.vm.provision "shell", path: "php-5.5.23.sh"
-  end
-
-  config.vm.define "php-5.5.24" do |web|
-    config.vm.provision "shell", path: "php-5.5.24.sh"
-  end
-  
-  config.vm.define "php-5.5.26" do |web|
-    config.vm.provision "shell", path: "php-5.5.26.sh"
-  end
-  
-  config.vm.define "php-5.6.10" do |web|
-    config.vm.provision "shell", path: "php-5.6.10.sh"
+  config.vm.define "build" do |web|
+    config.vm.provision "shell", path: "prepare-vm.sh"
   end
 end

@@ -1,3 +1,4 @@
+#!/bin/bash
 # Fail fast and fail hard.
 set -eo pipefail
 
