@@ -87,37 +87,49 @@ if [[ -f $PROJECT_ROOT/composer.json ]]; then
 
   # Check for custom php version
   PHP_VERSION_CHECK=$($BP_DIR/bin/jq --raw-output '.require | .["php-64bit"]' $PROJECT_ROOT/composer.json)
-  if [[ $PHP_VERSION_CHECK == "5.4.39" || $PHP_VERSION_CHECK == "5.4.42" || $PHP_VERSION_CHECK == "5.5.23" || $PHP_VERSION_CHECK == "5.5.26" || $PHP_VERSION_CHECK == "5.6.10" ]]; then
-    PHP_VERSION=php-${PHP_VERSION_CHECK}
-    PHP_CONFIGS_PATH="/srv/www/${PHP_VERSION}/etc/conf.d"
 
-    echo "Using php version ${PHP_VERSION_CHECK}" | indent_head
-    curl --silent --location "https://packages.${DOMAIN}/buildpack-php/${PHP_VERSION}.tar.bz2" | tar jx
-    
-    ln -s ${BUILD_DIR}/${PHP_VERSION} /srv/www/${PHP_VERSION}
-    echo "unset PHP_INI_SCAN_DIR" > .profile.d/php.sh
-    echo "export PATH=/srv/www/${PHP_VERSION}/sbin:/srv/www/${PHP_VERSION}/bin:$PATH" >> .profile.d/php.sh
-    source .profile.d/php.sh
-    cp $BP_DIR/opt/.bashrc .
+  if [[ $PHP_VERSION_CHECK != null ]]; then
+    echo "Found php version definition ${PHP_VERSION_CHECK}" | indent_head
 
-    mkdir bin
-    cp $BP_DIR/bin/jq bin
+    RESPONSEFILE=/tmp/semverioresponse.txt
+    status=$(curl -s -w %{http_code} https://semverio.cloudcontrolled.com/php/resolve/$PHP_VERSION_CHECK -o $RESPONSEFILE)
+    RESPONSE=`cat $RESPONSEFILE`
 
-    if [[ ${exts[*]} =~ "newrelic" ]]; then
-      install_newrelic
-    fi
+    if [[ $status == 200 ]]; then
+      PHP_VERSION=php-${RESPONSE}
+      PHP_CONFIGS_PATH="/srv/www/${PHP_VERSION}/etc/conf.d"
 
-    cp $BP_DIR/opt/boot.sh $BUILD_DIR/boot.sh
+      echo "Using php version ${PHP_VERSION}" | indent_head
+      curl --silent --location "https://packages.${DOMAIN}/buildpack-php/${PHP_VERSION}.tar.bz2" | tar jx
 
-    for ext in "${exts[@]}"; do
-      echo "extension = ${ext}.so" >> ${PHP_CONFIGS_PATH}/extensions.ini
-    done
+      ln -s ${BUILD_DIR}/${PHP_VERSION} /srv/www/${PHP_VERSION}
+      echo "unset PHP_INI_SCAN_DIR" > .profile.d/php.sh
+      echo "export PATH=/srv/www/${PHP_VERSION}/sbin:/srv/www/${PHP_VERSION}/bin:$PATH" >> .profile.d/php.sh
+      source .profile.d/php.sh
+      cp $BP_DIR/opt/.bashrc .
 
-    if [ -d .buildpack/php/conf ]; then
-      cp .buildpack/php/conf/*.ini ${PHP_CONFIGS_PATH}/
+      mkdir bin
+      cp $BP_DIR/bin/jq bin
+
+      if [[ ${exts[*]} =~ "newrelic" ]]; then
+        install_newrelic
+      fi
+
+      cp $BP_DIR/opt/boot.sh $BUILD_DIR/boot.sh
+
+      for ext in "${exts[@]}"; do
+        echo "extension = ${ext}.so" >> ${PHP_CONFIGS_PATH}/extensions.ini
+      done
+
+      if [ -d .buildpack/php/conf ]; then
+        cp .buildpack/php/conf/*.ini ${PHP_CONFIGS_PATH}/
+      fi
+    else
+      echo "WARN: Can get ${PHP_VERSION_CHECK} with error: $RESPONSE" | indent_head
+      echo "WARN: Falling back to legacy build." | indent_head
     fi
   else
-    echo "WARN: PHP definition found ${PHP_VERSION} which is not available" | indent_head
+    echo "WARN: No php version found in composer.json. Falling back to legacy build." | indent_head
   fi
 
   # Install composer
