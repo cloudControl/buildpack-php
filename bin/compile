@@ -111,6 +111,10 @@ if [[ -f $PROJECT_ROOT/composer.json ]]; then
       mkdir bin
       cp $BP_DIR/bin/jq bin
 
+      # Make /app/code available
+      ln -s $BUILD_DIR/code /srv/www/www
+      ln -s $BUILD_DIR/code /srv/www/code
+
       if [[ ${exts[*]} =~ "newrelic" ]]; then
         install_newrelic
       fi
