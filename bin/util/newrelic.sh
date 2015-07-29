@@ -15,20 +15,19 @@ function install_newrelic() {
   cp ${NEWRELIC_VERSION_FULL}/agent/x64/${NEWRELIC_EXTENSION} /srv/www/${PHP_VERSION}/lib/php/extensions/newrelic.so
   rm -r ${NEWRELIC_VERSION_FULL}
 
-  echo "newrelic.logfile = /dev/null" >> ${PHP_CONFIGS_PATH}/newrelic.ini
+  echo "newrelic.logfile = /dev/null" >> ${PHP_CONFIGS_PATH}/buildpack-newrelic.ini
 
-  echo "echo \"newrelic.license = \$(/srv/www/bin/jq '.NEWRELIC.NEWRELIC_LICENSE' /srv/creds/creds.json)\" >> /srv/www/${PHP_VERSION}/etc/conf.d/newrelic.ini" >> .profile.d/newrelic.sh
-  echo "echo \"newrelic.appname = \$(/srv/www/bin/jq '.NEWRELIC.NEWRELIC_APPNAME' /srv/creds/creds.json)\" >> /srv/www/${PHP_VERSION}/etc/conf.d/newrelic.ini" >> .profile.d/newrelic.sh
-
+  echo "echo \"newrelic.license = \$(/srv/www/bin/jq '.NEWRELIC.NEWRELIC_LICENSE' /srv/creds/creds.json)\" >> /srv/www/${PHP_VERSION}/etc/conf.d/buildpack-newrelic.ini" >> .profile.d/newrelic.sh
+  echo "echo \"newrelic.appname = \$(/srv/www/bin/jq '.NEWRELIC.NEWRELIC_APPNAME' /srv/creds/creds.json)\" >> /srv/www/${PHP_VERSION}/etc/conf.d/buildpack-newrelic.ini" >> .profile.d/newrelic.sh
 }
 
 function finalize_newrelic() {
-  echo "newrelic.logfile = stdout" > ${PHP_CONFIGS_PATH}/newrelic.ini
-  echo "newrelic.loglevel = info" > ${PHP_CONFIGS_PATH}/newrelic.ini
-  echo "newrelic.daemon.dont_launch = 0" > ${PHP_CONFIGS_PATH}/newrelic.ini
-  echo "newrelic.daemon.location = /srv/www/${PHP_VERSION}/bin/newrelic-daemon.x64" >> ${PHP_CONFIGS_PATH}/newrelic.ini
-  echo "newrelic.daemon.logfile = stdout" >> ${PHP_CONFIGS_PATH}/newrelic.ini
-  echo "newrelic.daemon.loglevel = info" >> ${PHP_CONFIGS_PATH}/newrelic.ini
-  echo "newrelic.daemon.pidfile = /app/newrelic-daemon.pid" >> ${PHP_CONFIGS_PATH}/newrelic.ini
-  echo "newrelic.daemon.port = /app/newrelic.sock" >> ${PHP_CONFIGS_PATH}/newrelic.ini
+  echo "newrelic.logfile = stdout" > ${PHP_CONFIGS_PATH}/buildpack-newrelic.ini
+  echo "newrelic.loglevel = info" > ${PHP_CONFIGS_PATH}/buildpack-newrelic.ini
+  echo "newrelic.daemon.dont_launch = 0" > ${PHP_CONFIGS_PATH}/buildpack-newrelic.ini
+  echo "newrelic.daemon.location = /srv/www/${PHP_VERSION}/bin/newrelic-daemon.x64" >> ${PHP_CONFIGS_PATH}/buildpack-newrelic.ini
+  echo "newrelic.daemon.logfile = stdout" >> ${PHP_CONFIGS_PATH}/buildpack-newrelic.ini
+  echo "newrelic.daemon.loglevel = info" >> ${PHP_CONFIGS_PATH}/buildpack-newrelic.ini
+  echo "newrelic.daemon.pidfile = /app/newrelic-daemon.pid" >> ${PHP_CONFIGS_PATH}/buildpack-newrelic.ini
+  echo "newrelic.daemon.port = /app/newrelic.sock" >> ${PHP_CONFIGS_PATH}/buildpack-newrelic.ini
 }
