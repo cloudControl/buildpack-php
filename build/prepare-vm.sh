@@ -10,7 +10,7 @@ echo "LANG=en_US.UTF-8" >> /etc/default/locale
 apt-get update -qq
 apt-get upgrade -y -qq
 
-apt-get install -y -qq libxml2-dev libpng-dev libicu-dev libxslt-dev libcurl4-openssl-dev pkg-config libjpeg-dev libfreetype6-dev libmcrypt-dev freetds-dev libbz2-dev libpq-dev libreadline-dev autoconf imagemagick git libtool s3cmd libmagickwand-dev libsasl2-dev libbison-dev re2c
+apt-get install -y -qq libxml2-dev libpng-dev libicu-dev libxslt-dev libcurl4-openssl-dev pkg-config libjpeg-dev libfreetype6-dev libmcrypt-dev freetds-dev libbz2-dev libpq-dev libreadline-dev autoconf imagemagick git libtool s3cmd libmagickwand-dev libsasl2-dev libbison-dev re2c python-pip
 
 # configure: error: Could not find /usr/lib/libsybdb.a|so
 ln -f -s /usr/lib/x86_64-linux-gnu/libsybdb.a /usr/lib/libsybdb.a

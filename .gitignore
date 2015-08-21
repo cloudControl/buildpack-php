@@ -1,4 +1,3 @@
 .vagrant/
-build/httpd-*.tar.bz2
-build/php-*.tar.bz2
+build/buildpack-php/*
 build/.vagrant/
