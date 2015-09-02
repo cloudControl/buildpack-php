@@ -102,6 +102,11 @@ if [[ -f $PROJECT_ROOT/composer.json ]]; then
       echo "Using php version ${PHP_VERSION}" | indent_head
       curl --silent --location "https://packages.${DOMAIN}/buildpack-php/${PHP_VERSION}.tar.bz2" | tar jx
 
+      if [ ${#exts[@]} -eq 0 ]; then
+        echo "No extensions found in composer.json, adding default extensions" | indent_head
+        exts=(amqp bcmath bz2 calendar curl dba exif ftp gd gettext imagick intl mbstring mcrypt memcached mongo mssql mysql mysqli mysqlnd newrelic oauth pdo pdo_dblib pdo_mysql pdo_pgsql pdo_sqlite pgsql shmop soap sockets sqlite3 sysvmsg sysvsem sysvshm wddx xmlrpc xsl zip zlib)
+      fi
+
       ln -s ${BUILD_DIR}/${PHP_VERSION} /srv/www/${PHP_VERSION}
       echo "unset PHP_INI_SCAN_DIR" > .profile.d/php.sh
       echo "export PATH=/srv/www/${PHP_VERSION}/sbin:/srv/www/${PHP_VERSION}/bin:\$PATH" >> .profile.d/php.sh
