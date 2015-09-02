@@ -88,7 +88,7 @@ if [[ -f $PROJECT_ROOT/composer.json ]]; then
   # Check for custom php version
   PHP_VERSION_NUMBER=$($BP_DIR/bin/jq --raw-output '.require | .["php-64bit"]' $PROJECT_ROOT/composer.json)
 
-  if [[ -n $PHP_VERSION_NUMBER ]]; then
+  if [[ "$PHP_VERSION_NUMBER" != "null" ]]; then
     echo "Found php version definition ${PHP_VERSION_NUMBER}" | indent_head
 
     RESPONSEFILE=/tmp/semverioresponse.txt
