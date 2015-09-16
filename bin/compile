@@ -57,12 +57,17 @@ find . -mindepth 1 -maxdepth 1 -not -regex "./Procfile\|$TMP\|./.buildpack" -exe
 mv "$TMP" "$PROJECT_ROOT"
 ln -s code www
 
+APACHE_VERSION=httpd-2.2.31
+echo "Using apache version ${APACHE_VERSION}" | indent_head
+curl --silent --location "https://packages.${DOMAIN}/buildpack-php/${APACHE_VERSION}.tar.bz2" | tar jx
+
 mkdir -p $APACHE_PATH/logs
 mkdir -p $APACHE_PATH/conf/{share,local,user}
 mkdir -p $PHP_PATH/{box,conf,logs}
 mkdir -p $BUILD_DIR/.profile.d
 
 cp $BP_DIR/support/boot.sh .
+
 
 if [[ -f $PROJECT_ROOT/composer.json ]]; then
   # Install extensions

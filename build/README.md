@@ -20,3 +20,8 @@
  - php-5.6.10
  - php-5.6.11
  - php-5.6.12
+
+# Build apache
+
+    vagrant up build
+    vagrant ssh build -c 'sudo /vagrant/php-apache.sh'
