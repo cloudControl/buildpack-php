@@ -222,6 +222,7 @@ fi
 
 cp $BP_DIR/conf/httpd.conf $APACHE_PATH/conf
 cp $BP_DIR/conf/httpd-old.conf $APACHE_PATH/conf
+cp $BP_DIR/conf/mime.types $APACHE_PATH/conf
 cp -r $BP_DIR/conf/mods-enabled $APACHE_PATH/conf
 if [ -d .buildpack/apache/conf ]; then
   cp .buildpack/apache/conf/* $APACHE_PATH/conf/user
