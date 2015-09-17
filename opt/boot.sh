@@ -55,6 +55,7 @@ unset PHP_INI_SCAN_DIR
 # FIXME detect abnormal php-fpm exit
 php-fpm --fpm-config /app/php/php-fpm.ini &
 phppid=$!
-apache2 -f /app/apache/conf/httpd.conf -D FOREGROUND &
+apache2 -f /app/apache/conf/httpd-old.conf -D FOREGROUND &
+#/srv/www/httpd-2.2.31/bin/apachectl -f /app/apache/conf/httpd.conf -D FOREGROUND &
 apachepid=$!
 wait $apachepid
