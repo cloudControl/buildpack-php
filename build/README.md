@@ -1,7 +1,26 @@
 # Build php
 
-    vagrant up build
-    vagrant ssh build -c 'sudo /vagrant/php-build.sh VERSION'
+Building PHP requires a working Docker setup with the latest stack images
+available. The Makefile does take care of building the docker container and
+run the PHP buildscript.
+
+## Build all Stacks
+
+```
+make version=VERSION  # e.g. php-5.6.12
+```
+
+## Build a specific stack
+
+```
+make STACK version=VERSION  # e.g. trinity
+```
+
+## Cleanup
+
+```
+make clean
+```
 
 ## Builds
 
