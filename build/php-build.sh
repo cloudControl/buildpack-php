@@ -97,6 +97,6 @@ make -s install
 cd ..
 
 cd ${PHP_DIR}/..
-mkdir -p /vagrant/dist/${STACK}
-tar cjf /vagrant/dist/${STACK}/${PHP_VERSION}.tar.bz2 ${PHP_VERSION}
-chmod -R 777 /vagrant/dist/${STACK}
+mkdir -p /build/dist/${STACK}
+tar cjf /build/dist/${STACK}/${PHP_VERSION}.tar.bz2 ${PHP_VERSION}
+chmod -R 777 /build/dist/${STACK}
