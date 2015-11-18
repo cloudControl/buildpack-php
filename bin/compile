@@ -113,7 +113,7 @@ if [[ -f $PROJECT_ROOT/composer.json ]]; then
       source .profile.d/php.sh
       cp $BP_DIR/opt/.bashrc .
 
-      mkdir bin
+      mkdir -p bin
       cp $BP_DIR/bin/jq bin
 
       # Make /app/code available
