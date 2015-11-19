@@ -37,6 +37,11 @@ PHP_CONFIGS_PATH="${PHP_PATH}/conf"
 CODE_DIR=code
 PROJECT_ROOT=$BUILD_DIR/$CODE_DIR
 
+ZEND_MODULE_API_VERSION=20100525
+ext_dir=${BUILD_DIR}/usr/lib/php5/${ZEND_MODULE_API_VERSION}
+PHP_MAJOR_VERSION=5
+PHP_MINOR_VERSION=4
+
 cd $BUILD_DIR
 
 source $BIN_DIR/util/helper.sh
@@ -68,9 +73,6 @@ if [[ -f $PROJECT_ROOT/composer.json ]]; then
   # Install extensions
   exts=($($BP_DIR/bin/jq -r '.require | keys | map(select(startswith("ext-"))) | map(.[4:])|.[]' $PROJECT_ROOT/composer.json))
 
-  if [[ ${exts[*]} =~ "blackfire" ]]; then
-    install_blackfire
-  fi
 
   # Caching: pre-install
   CACHED_DIRS=$($BP_DIR/bin/jq -e -r '.config["vendor-dir"]' $PROJECT_ROOT/composer.json) || CACHED_DIRS="vendor"
@@ -97,6 +99,7 @@ if [[ -f $PROJECT_ROOT/composer.json ]]; then
 
     if [[ $status == 200 ]]; then
       PHP_VERSION=php-${RESPONSE}
+      PHP_MINOR_VERSION=`echo $RESPONSE | cut -d '.' -f 2`
       PHP_CONFIGS_PATH="/srv/www/${PHP_VERSION}/etc/conf.d"
 
       echo "Using php version ${PHP_VERSION}" | indent_head
@@ -120,8 +123,16 @@ if [[ -f $PROJECT_ROOT/composer.json ]]; then
       ln -s $BUILD_DIR/code /srv/www/www
       ln -s $BUILD_DIR/code /srv/www/code
 
+      ZEND_MODULE_API_VERSION2=`php -r 'echo phpinfo();' | grep -i 'Zend Extension =>' | cut -d ' ' -f 4`
+      ZEND_MODULE_API_VERSION=${ZEND_MODULE_API_VERSION2:1}
+      ext_dir=/app/${PHP_VERSION}/lib/php/extensions
+
       if [[ ${exts[*]} =~ "newrelic" ]]; then
         install_newrelic
+      fi
+
+      if [[ ${exts[*]} =~ "blackfire" ]]; then
+        install_blackfire
       fi
 
       cp $BP_DIR/opt/boot.sh $BUILD_DIR/boot.sh
@@ -140,8 +151,10 @@ if [[ -f $PROJECT_ROOT/composer.json ]]; then
     fi
   else
     echo "WARN: No php version found in composer.json. Falling back to legacy build." | indent_head
+    if [[ ${exts[*]} =~ "blackfire" ]]; then
+      install_blackfire
+    fi
   fi
-
   # Install composer
   echo "Installing composer dependencies..." | indent_head
   if [[ ! -f $PROJECT_ROOT/composer.phar ]]; then
