@@ -31,6 +31,12 @@ install_blackfire() {
 
   echo "Done." | indent
 
+  if [[ -n ${PHP_VERSION} ]]; then
+    CONFIGS_PATH="/app/${PHP_VERSION}/etc/conf.d/"
+  else
+    CONFIGS_PATH=/app/php/conf/
+  fi
+
    # Create the .profile.d script
   cat > $BUILD_DIR/.profile.d/blackfire.sh <<EOF
 BLACKFIRE_SERVER_ID=\$(jq -r 'if .BLACKFIRE|has("BLACKFIRE_SERVER_ID") then .BLACKFIRE.BLACKFIRE_SERVER_ID else "" end' /srv/creds/creds.json)
@@ -45,8 +51,7 @@ if [[ -n "\${BLACKFIRE_SERVER_ID}" && -n "\${BLACKFIRE_SERVER_TOKEN}" ]]; then
   echo -e "[blackfire]\nserver-id=2dcacfa8-9618-421c-8a3e-fdc5cca4ed45\nserver-token=3e96b0848ec67171c370255fe22edd051a372593f26c3cf472b247fdb14ba401" > /app/etc/blackfire/agent.ini
 
   # Configure and enable the probe
-  cat > /app/php/conf/ext-blackfire.ini <<EOT
-extension = /app/usr/lib/php5/${ZEND_MODULE_API_VERSION}/blackfire.so
+  cat >> ${CONFIGS_PATH}/ext-blackfire.ini <<EOT
 blackfire.log_level = 1
 blackfire.server_token = \${BLACKFIRE_SERVER_TOKEN}
 blackfire.server_id = \${BLACKFIRE_SERVER_ID}
@@ -61,6 +66,9 @@ else
 fi
 EOF
 
+  if [[ -z "${PHP_VERSION}" ]]; then
+    echo 'extension = /app/usr/lib/php5/20100525/blackfire.so' >> "${PHP_CONFIGS_PATH}/ext-blackfire.ini"
+  fi
   # We have to ignore the platform requirements otherwise composer will fail
   COMPOSER_INSTALL_ARGS="$COMPOSER_INSTALL_ARGS --ignore-platform-reqs"
 }
