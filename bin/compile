@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright 2014 cloudControl GmbH
+# Copyright 2015 cloudControl GmbH
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -40,13 +40,12 @@ PROJECT_ROOT=$BUILD_DIR/$CODE_DIR
 ZEND_MODULE_API_VERSION=20100525
 ext_dir=${BUILD_DIR}/usr/lib/php5/${ZEND_MODULE_API_VERSION}
 PHP_MAJOR_VERSION=5
-PHP_MINOR_VERSION=4
+PHP_MINOR_VERSION=6
 
 cd $BUILD_DIR
 
 source $BIN_DIR/util/helper.sh
 source $BIN_DIR/util/framework.sh
-source $BIN_DIR/util/deprecated.sh
 
 # Load buildpack environment
 if [[ -f .buildpack/envrc ]]; then
@@ -67,13 +66,12 @@ mkdir -p $APACHE_PATH/conf/{share,local,user}
 mkdir -p $PHP_PATH/{box,conf,logs}
 mkdir -p $BUILD_DIR/.profile.d
 
-cp $BP_DIR/support/boot.sh .
+PHP_VERSION_NUMBER="~5.6"
+exts=(amqp bcmath bz2 calendar curl dba exif ftp gd gettext imagick intl mbstring mcrypt memcached mongo mssql mysql mysqli mysqlnd newrelic oauth pdo pdo_dblib pdo_mysql pdo_pgsql pdo_sqlite pgsql shmop soap sockets sqlite3 sysvmsg sysvsem sysvshm wddx xmlrpc xsl zip zlib)
 
-if [[ -f $PROJECT_ROOT/composer.json ]]; then
-  # Install extensions
-  exts=($($BP_DIR/bin/jq -r '.require | keys | map(select(startswith("ext-"))) | map(.[4:])|.[]' $PROJECT_ROOT/composer.json))
-
-
+if [[ ! -f $PROJECT_ROOT/composer.json ]]; then
+  echo "No composer.json found, using php-64bit: ${PHP_VERSION_NUMBER} and default extensions." | indent_head
+else
   # Caching: pre-install
   CACHED_DIRS=$($BP_DIR/bin/jq -e -r '.config["vendor-dir"]' $PROJECT_ROOT/composer.json) || CACHED_DIRS="vendor"
 
@@ -88,98 +86,91 @@ if [[ -f $PROJECT_ROOT/composer.json ]]; then
   done
 
   # Check for custom php version
-  PHP_VERSION_NUMBER=$($BP_DIR/bin/jq --raw-output '.require | .["php-64bit"]' $PROJECT_ROOT/composer.json)
+  COMPOSER_PHP_VERSION_NUMBER=$($BP_DIR/bin/jq --raw-output '.require | .["php-64bit"]' $PROJECT_ROOT/composer.json)
 
-  if [[ "$PHP_VERSION_NUMBER" != "null" ]]; then
-    echo "Found php version definition ${PHP_VERSION_NUMBER}" | indent_head
-
-    RESPONSEFILE=/tmp/semverioresponse.txt
-    status=$(curl -s -w %{http_code} "https://semverio.cloudcontrolled.com/php/resolve/$PHP_VERSION_NUMBER" -o $RESPONSEFILE)
-    RESPONSE=$(cat $RESPONSEFILE)
-
-    if [[ $status == 200 ]]; then
-      PHP_VERSION=php-${RESPONSE}
-      PHP_MINOR_VERSION=`echo $RESPONSE | cut -d '.' -f 2`
-      PHP_CONFIGS_PATH="/srv/www/${PHP_VERSION}/etc/conf.d"
-
-      echo "Using php version ${PHP_VERSION}" | indent_head
-      curl --silent --location "https://packages.${DOMAIN}/buildpack-php/${PHP_VERSION}.tar.bz2" | tar jx
-
-      if [ ${#exts[@]} -eq 0 ]; then
-        echo "No extensions found in composer.json, adding default extensions" | indent_head
-        exts=(amqp bcmath bz2 calendar curl dba exif ftp gd gettext imagick intl mbstring mcrypt memcached mongo mssql mysql mysqli mysqlnd newrelic oauth pdo pdo_dblib pdo_mysql pdo_pgsql pdo_sqlite pgsql shmop soap sockets sqlite3 sysvmsg sysvsem sysvshm wddx xmlrpc xsl zip zlib)
-      fi
-
-      ln -s ${BUILD_DIR}/${PHP_VERSION} /srv/www/${PHP_VERSION}
-      echo "unset PHP_INI_SCAN_DIR" > .profile.d/php.sh
-      echo "export PATH=/srv/www/${PHP_VERSION}/sbin:/srv/www/${PHP_VERSION}/bin:\$PATH" >> .profile.d/php.sh
-      source .profile.d/php.sh
-      cp $BP_DIR/opt/.bashrc .
-
-      mkdir -p bin
-      cp $BP_DIR/bin/jq bin
-
-      # Make /app/code available
-      ln -s $BUILD_DIR/code /srv/www/www
-      ln -s $BUILD_DIR/code /srv/www/code
-
-      ZEND_MODULE_API_VERSION2=`php -r 'echo phpinfo();' | grep -i 'Zend Extension =>' | cut -d ' ' -f 4`
-      ZEND_MODULE_API_VERSION=${ZEND_MODULE_API_VERSION2:1}
-      ext_dir=/app/${PHP_VERSION}/lib/php/extensions
-
-      if [[ ${exts[*]} =~ "newrelic" ]]; then
-        install_newrelic
-      fi
-
-      if [[ ${exts[*]} =~ "blackfire" ]]; then
-        install_blackfire
-      fi
-
-      cp $BP_DIR/opt/boot.sh $BUILD_DIR/boot.sh
-
-      for ext in "${exts[@]}"; do
-        echo "Loading extension: ${ext}" | indent_head
-        echo "extension = ${ext}.so" >> ${PHP_CONFIGS_PATH}/extensions.ini
-      done
-
-      if [ -d .buildpack/php/conf ]; then
-        cp .buildpack/php/conf/*.ini ${PHP_CONFIGS_PATH}/
-      fi
-    else
-      echo "WARN: Can not get ${PHP_VERSION_NUMBER} with error: $RESPONSE" | indent_head
-      exit 1
-    fi
+  if [[ "$COMPOSER_PHP_VERSION_NUMBER" != "null" ]]; then
+    echo "Found php version definition ${COMPOSER_PHP_VERSION_NUMBER}" | indent_head
+    PHP_VERSION_NUMBER=${COMPOSER_PHP_VERSION_NUMBER}
   else
-    echo "WARN: No php version found in composer.json. Falling back to legacy build." | indent_head
-    if [[ ${exts[*]} =~ "blackfire" ]]; then
-      install_blackfire
-    fi
+    echo "No php version defined in composer.json, using php-64bit: ${PHP_VERSION_NUMBER}." | indent_head
   fi
+
+  # Install extensions
+  composer_exts=($($BP_DIR/bin/jq -r '.require | keys | map(select(startswith("ext-"))) | map(.[4:])|.[]' $PROJECT_ROOT/composer.json))
+
+  if [ ${#composer_exts[@]} -ne 0 ]; then
+    exts=(${composer_exts[@]})
+  else
+    echo "No extensions found in composer.json, adding default extensions." | indent_head
+  fi
+fi
+
+RESPONSEFILE=/tmp/semverioresponse.txt
+status=$(curl -s -w %{http_code} "https://semverio.${DOMAIN}/php/resolve/${PHP_VERSION_NUMBER}" -o $RESPONSEFILE)
+RESPONSE=$(cat ${RESPONSEFILE})
+
+if [[ $status != 200 ]]; then
+  echo "WARN: Can not get ${PHP_VERSION_NUMBER} with error: ${RESPONSE}" | indent_head
+  exit 1
+fi
+
+PHP_VERSION=php-${RESPONSE}
+PHP_MINOR_VERSION=`echo $RESPONSE | cut -d '.' -f 2`
+PHP_CONFIGS_PATH="/srv/www/${PHP_VERSION}/etc/conf.d"
+
+echo "Using php version ${PHP_VERSION}" | indent_head
+curl --silent --location "https://packages.${DOMAIN}/buildpack-php/${PHP_VERSION}.tar.bz2" | tar jx
+
+ln -s ${BUILD_DIR}/${PHP_VERSION} /srv/www/${PHP_VERSION}
+echo "export PATH=/srv/www/${PHP_VERSION}/sbin:/srv/www/${PHP_VERSION}/bin:\$PATH" >> .profile.d/php.sh
+source .profile.d/php.sh
+cp $BP_DIR/conf/.bashrc .
+
+mkdir -p bin
+cp $BP_DIR/bin/jq bin
+
+ZEND_MODULE_API_VERSION2=`php -r 'echo phpinfo();' | grep -i 'Zend Extension =>' | cut -d ' ' -f 4`
+ZEND_MODULE_API_VERSION=${ZEND_MODULE_API_VERSION2:1}
+ext_dir=/app/${PHP_VERSION}/lib/php/extensions
+
+cp $BP_DIR/conf/boot.sh $BUILD_DIR/boot.sh
+# Make /app/code available
+ln -s $BUILD_DIR/code /srv/www/www
+ln -s $BUILD_DIR/code /srv/www/code
+
+if [[ ${exts[*]} =~ "blackfire" ]]; then
+  install_blackfire
+fi
+
+if [[ ${exts[*]} =~ "newrelic" ]]; then
+  install_newrelic
+fi
+
+cp $BP_DIR/conf/boot.sh $BUILD_DIR/boot.sh
+
+for ext in "${exts[@]}"; do
+  echo "Loading extension: ${ext}" | indent_head
+  echo "extension = ${ext}.so" >> ${PHP_CONFIGS_PATH}/extensions.ini
+done
+
+if [ -d .buildpack/php/conf ]; then
+  cp .buildpack/php/conf/*.ini ${PHP_CONFIGS_PATH}/
+fi
+
+if [[ -f $PROJECT_ROOT/composer.json ]]; then
   # Install composer
   echo "Installing composer dependencies..." | indent_head
   if [[ ! -f $PROJECT_ROOT/composer.phar ]]; then
     curl --remote-name --silent --show-error https://getcomposer.org/installer
     php installer --quiet --install-dir=$PROJECT_ROOT
-
-    # We do not delete the installer in the legacy build
-    # as soon as we have only the custom build the if clause
-    # can be deleted and the installer can be removed always
-    if [[ -n "${PHP_VERSION}" ]]; then
-      rm installer
-    fi
+    rm installer
   fi
 
   php $PROJECT_ROOT/composer.phar install $COMPOSER_INSTALL_ARGS -n -d $PROJECT_ROOT/ | indent
 
   # Clean the Image
   rm $PROJECT_ROOT/composer.phar
-
-  if [[ -n "${PHP_VERSION}" ]]; then
-    if [[ ${exts[*]} =~ "newrelic" ]]; then
-      finalize_newrelic
-    fi
-  fi
-
+  
   # Caching: post-install
   for dir in $CACHED_DIRS; do
     rm -rf $CACHE_DIR/${dir##*/}
@@ -187,15 +178,11 @@ if [[ -f $PROJECT_ROOT/composer.json ]]; then
   done
 fi
 
-if [[ -z "${PHP_VERSION}" ]]; then
-  check_ccconfig
+if [[ ${exts[*]} =~ "newrelic" ]]; then
+  finalize_newrelic
 fi
 
 framework_detection
-
-if [[ -z "${PHP_VERSION}" ]]; then
-  check_luigi
-fi
 
 # set default values if not defined in user custom configuration files
 if ! grep -q -s "DocumentRoot" .buildpack/apache/conf/*.conf ; then
@@ -218,21 +205,7 @@ else
   cp $BP_DIR/conf/php-fpm.ini $PHP_PATH
 fi
 
-if [[ -z "${PHP_VERSION}" ]]; then
-  cp $BP_DIR/conf/php.ini ${PHP_CONFIGS_PATH}/010_php.ini
-
-  copy_default_config
-
-  if [ -d .buildpack/php/conf ]; then
-    cp .buildpack/php/conf/*.ini ${PHP_CONFIGS_PATH}/
-  fi
-fi
-
 cp $BP_DIR/conf/httpd.conf $APACHE_PATH/conf
 if [ -d .buildpack/apache/conf ]; then
   cp .buildpack/apache/conf/* $APACHE_PATH/conf/user
-fi
-
-if [[ -z "${PHP_VERSION}" ]]; then
-  configure_apc
 fi
