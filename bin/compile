@@ -94,7 +94,7 @@ if [[ -f $PROJECT_ROOT/composer.json ]]; then
     echo "Found php version definition ${PHP_VERSION_NUMBER}" | indent_head
 
     RESPONSEFILE=/tmp/semverioresponse.txt
-    status=$(curl -s -w %{http_code} "https://semverio.cloudcontrolled.com/php/resolve/$PHP_VERSION_NUMBER" -o $RESPONSEFILE)
+    status=$(curl -s -w %{http_code} "https://semverio.${DOMAIN}/php/resolve/$PHP_VERSION_NUMBER" -o $RESPONSEFILE)
     RESPONSE=$(cat $RESPONSEFILE)
 
     if [[ $status == 200 ]]; then
