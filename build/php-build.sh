@@ -82,7 +82,7 @@ cd ..
 echo "\n\n" | /srv/www/${PHP_VERSION}/bin/pear install channel://pecl.php.net/apcu-4.0.7
 
 printf "\n" | /srv/www/${PHP_VERSION}/bin/pecl install mongo
-/srv/www/${PHP_VERSION}/bin/pecl install oauth
+/srv/www/${PHP_VERSION}/bin/pecl install oauth-1.2.3
 printf "\n" | /srv/www/${PHP_VERSION}/bin/pecl install imagick
 /srv/www/${PHP_VERSION}/bin/pecl install amqp
 printf "\n\n\n\n\n\n" | /srv/www/${PHP_VERSION}/bin/pecl install apc
